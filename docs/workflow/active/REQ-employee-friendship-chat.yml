@@ -16,14 +16,14 @@ docs:
   prd: docs/product/requirements/REQ-employee-friendship-chat.md
   ux: null
   technical_design: docs/engineering/REQ-employee-friendship-chat-technical-design.md
-  implementation_plan: null
+  implementation_plan: docs/engineering/plans/REQ-employee-friendship-chat-implementation-plan.md
   test_report: null
   release_note: null
 
 reviews:
   product_review: approved
   ux_review: not_required
-  technical_review: pending
+  technical_review: approved
   code_review: pending
   qa_review: pending
 
@@ -41,3 +41,4 @@ dependencies: []
 notes:
   - GitHub execution Issues will be created only after PRD and technical design approval.
   - Issue split should use independent minimal feature slices rather than default frontend/backend layers.
+  - Implementation plan passed agent plan review and is awaiting user confirmation before execution Issues are created.

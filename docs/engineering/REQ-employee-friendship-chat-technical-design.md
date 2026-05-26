@@ -1,6 +1,6 @@
 # Employee Friendship Approval And Direct Chat Technical Design
 
-Status: draft for technical review
+Status: technical design approved; implementation plan reviewed
 
 PRD: `docs/product/requirements/REQ-employee-friendship-chat.md`
 

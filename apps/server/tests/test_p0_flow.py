@@ -1,3 +1,4 @@
+import asyncio
 import json
 import queue
 import re
@@ -11,6 +12,7 @@ from app.db.session import SessionLocal, engine
 from app.models.bot import Bot, UserBotBinding
 from app.models.friendship import Friendship
 from app.services.bot_gateway_sessions import bot_gateway_sessions
+from app.ws.employee import EmployeeWebSocketSessions
 from tests.conftest import auth_headers
 
 
@@ -316,14 +318,14 @@ def test_bot_gateway_pushes_status_changed_to_owner(client: TestClient) -> None:
             assert bot_websocket.receive_json()["type"] == "handshake.result"
 
             event = receive_json_with_timeout(employee_websocket)
+            api_bot = next(
+                item
+                for item in client.get("/api/bots", headers=auth_headers(token)).json()["data"]["items"]
+                if item["bot_id"] == bot_id
+            )
 
     assert event["type"] == "bot.status_changed"
-    assert event["bot"]["bot_id"] == bot_id
-    assert event["bot"]["connect_status"] == "connected"
-    assert event["bot"]["binding_status"] == "active"
-    assert event["bot"]["name"] == "OpenClaw 员工助手"
-    assert event["bot"]["last_seen_at"] is not None
-    assert event["bot"]["first_connected_at"] is not None
+    assert event["bot"] == api_bot
 
 
 def test_bot_gateway_pushes_disconnected_on_socket_close(client: TestClient) -> None:
@@ -363,6 +365,20 @@ def test_bot_gateway_pushes_disconnected_on_socket_close(client: TestClient) -> 
     assert event["bot"]["binding_status"] == "active"
     assert "last_seen_at" in event["bot"]
     assert "first_connected_at" in event["bot"]
+
+
+def test_employee_send_to_user_removes_stale_socket_on_send_failure() -> None:
+    class BrokenWebSocket:
+        async def send_json(self, payload: dict[str, object]) -> None:
+            raise RuntimeError("socket closed")
+
+    sessions = EmployeeWebSocketSessions()
+    websocket = BrokenWebSocket()
+    sessions._sessions[1] = {websocket}
+
+    asyncio.run(sessions.send_to_user(1, {"type": "ping"}))
+
+    assert 1 not in sessions._sessions
 
 
 def test_bot_gateway_auth_only_disconnect_marks_bot_disconnected(client: TestClient) -> None:

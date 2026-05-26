@@ -11,6 +11,7 @@ import {
   Conversation,
   ConversationMessage,
   User,
+  acceptFriend,
   addFriend,
   contacts,
   conversationMessages,
@@ -191,21 +192,31 @@ function ChatPage({
       queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
         current ? updateContactUserRelationship(current, userId, result.relationship) : current
       );
-      setSelected((current) =>
-        current.type === "profile" && current.target.type === "user" && current.target.user.id === userId
-          ? {
-              type: "profile",
-              target: {
-                type: "user",
-                user: { ...current.target.user, relationship: result.relationship }
-              }
-            }
-          : current
-      );
+      setSelected((current) => updateSelectedUserRelationship(current, userId, result.relationship));
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (err) => {
       message.error(err instanceof ApiError ? err.message : "好友申请失败");
+    }
+  });
+
+  const acceptFriendMutation = useMutation({
+    mutationFn: async (userId: number) => ({ userId, result: await acceptFriend(token, userId) }),
+    onSuccess: ({ userId, result }) => {
+      message.success("已添加好友");
+      queryClient.setQueryData<{ items: User[] }>(["users"], (current) => ({
+        items: (current?.items ?? []).map((item) =>
+          item.id === userId ? { ...item, relationship: result.relationship } : item
+        )
+      }));
+      queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
+        current ? updateContactUserRelationship(current, userId, result.relationship) : current
+      );
+      setSelected((current) => updateSelectedUserRelationship(current, userId, result.relationship));
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+    onError: (err) => {
+      message.error(err instanceof ApiError ? err.message : "接受好友申请失败");
     }
   });
 
@@ -321,8 +332,10 @@ function ChatPage({
           <TargetProfile
             target={selectedView.target}
             adding={addFriendMutation.isPending}
+            accepting={acceptFriendMutation.isPending}
             opening={ensureMutation.isPending}
             onAddFriend={(userId) => addFriendMutation.mutate(userId)}
+            onAcceptFriend={(userId) => acceptFriendMutation.mutate(userId)}
             onOpenSession={() => ensureMutation.mutate(selectedView.target)}
           />
         ) : (
@@ -460,14 +473,18 @@ function ContactLine({
 function TargetProfile({
   target,
   adding,
+  accepting,
   opening,
   onAddFriend,
+  onAcceptFriend,
   onOpenSession
 }: {
   target: ProfileTarget;
   adding: boolean;
+  accepting: boolean;
   opening: boolean;
   onAddFriend: (userId: number) => void;
+  onAcceptFriend: (userId: number) => void;
   onOpenSession: () => void;
 }) {
   if (target.type === "system_default_bot") {
@@ -508,7 +525,14 @@ function TargetProfile({
       )}
       {target.user.relationship === "self" && <Typography.Text type="secondary">这是你自己</Typography.Text>}
       {target.user.relationship === "pending_out" && <Typography.Text type="secondary">等待对方确认</Typography.Text>}
-      {target.user.relationship === "pending_in" && <Typography.Text type="secondary">对方已申请添加你</Typography.Text>}
+      {target.user.relationship === "pending_in" && (
+        <>
+          <Typography.Text type="secondary">对方已申请添加你</Typography.Text>
+          <Button type="primary" loading={accepting} onClick={() => onAcceptFriend(target.user.id)}>
+            接受
+          </Button>
+        </>
+      )}
       {canMessage && (
         <Button type="primary" loading={opening} onClick={onOpenSession}>
           发送消息
@@ -807,6 +831,22 @@ function updateContactUserRelationship(
         : item
     )
   };
+}
+
+function updateSelectedUserRelationship(
+  current: SelectedView,
+  userId: number,
+  relationship: User["relationship"]
+): SelectedView {
+  return current.type === "profile" && current.target.type === "user" && current.target.user.id === userId
+    ? {
+        type: "profile",
+        target: {
+          type: "user",
+          user: { ...current.target.user, relationship }
+        }
+      }
+    : current;
 }
 
 function updateContactBot(current: { ai: ContactItem[]; all: ContactItem[] }, bot: BotItem) {

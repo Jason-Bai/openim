@@ -13,11 +13,15 @@ phase: idea
 
 github:
   issue: null
+  issues: []
   pr: null
+  prs: []
 
 branch:
   name: null
   worktree: null
+
+execution_items: []
 
 docs:
   prd: null
@@ -46,6 +50,20 @@ timestamps:
 blockers: []
 dependencies: []
 notes: []
+```
+
+## Optional Multi-Issue Execution
+
+When one approved requirement is split into multiple independently shippable execution Issues, keep the top-level `github.issue`, `github.pr`, `branch.name`, and `branch.worktree` as the primary or first active execution item for compatibility, and record the full set under `execution_items`.
+
+```yaml
+execution_items:
+  - issue: https://github.com/OWNER/REPO/issues/1
+    pr: https://github.com/OWNER/REPO/pull/2
+    branch: feature/1-short-name
+    worktree: /absolute/path/to/worktree
+    phase: code_review
+    status: active
 ```
 
 ## Allowed Values
@@ -99,8 +117,8 @@ notes: []
 - `requirement_approved` requires `reviews.product_review: approved`.
 - `technical_review` requires `docs.technical_design`.
 - `planned` requires `docs.implementation_plan`.
-- `development` requires `branch.name` and `branch.worktree`.
-- `code_review` requires `github.pr`.
+- `development` requires `branch.name` and `branch.worktree`, or at least one `execution_items` entry with branch and worktree.
+- `code_review` requires `github.pr`, or at least one `execution_items` entry with `pr`.
 - `testing` requires at least one verification command in the PR.
 - `qa_review` requires `docs.test_report` unless explicitly waived in `notes`.
 - `deployed` requires `deployment.environment` and `deployment.smoke_test`.
@@ -108,4 +126,4 @@ notes: []
 
 ## Parallel Work Guidance
 
-Parallel requirements should update separate registry files. If two branches need to update the same registry file, the requirements probably are not independent and should be sequenced or merged into one delivery unit.
+Parallel requirements should update separate registry files. If one requirement is intentionally split into multiple independent execution Issues, record them in `execution_items` and keep each Issue in its own branch/worktree.

@@ -539,6 +539,13 @@ function ConversationChat({
 }) {
   const quickCommands =
     conversation.target_type === "system_default_bot" ? ["/help", "/new-bot", "/my-bots"] : [];
+  const lastMessage = messages[messages.length - 1];
+  const lastUserMessage = findPreviousUserMessage(messages);
+  const canRetryLastOpenClawMessage =
+    conversation.target_type === "openclaw_bot" &&
+    lastMessage?.sender_type === "system" &&
+    lastMessage.content.includes("暂时没有返回") &&
+    lastUserMessage;
   return (
     <>
       <header className="chatHeader">
@@ -558,6 +565,17 @@ function ConversationChat({
           </div>
         ))}
       </div>
+      {canRetryLastOpenClawMessage && (
+        <div className="chatNotice">
+          <Button
+            size="small"
+            onClick={() => onSubmit(lastUserMessage.content)}
+            disabled={loading || disabled}
+          >
+            重新发送上一条
+          </Button>
+        </div>
+      )}
       {disabled && disabledReason && <div className="chatNotice">{disabledReason}</div>}
       {quickCommands.length > 0 && (
         <div className="quickCommands">
@@ -593,6 +611,15 @@ function ConversationChat({
       </form>
     </>
   );
+}
+
+function findPreviousUserMessage(messages: ConversationMessage[]) {
+  for (let index = messages.length - 2; index >= 0; index -= 1) {
+    if (messages[index].sender_type === "user") {
+      return messages[index];
+    }
+  }
+  return null;
 }
 
 function ProfileShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {

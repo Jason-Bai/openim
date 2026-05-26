@@ -7,10 +7,12 @@ import threading
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.core.errors import ApiError
 from app.db.runtime_schema import ensure_sqlite_runtime_schema
 from app.db.session import SessionLocal, engine
 from app.models.bot import Bot, BotConnectionLog, UserBotBinding
 from app.models.friendship import Friendship
+from app.services import messages as message_service
 from app.services.bot_gateway_sessions import bot_gateway_sessions
 from app.ws.employee import EmployeeWebSocketSessions
 from tests.conftest import auth_headers
@@ -386,6 +388,36 @@ def test_bot_gateway_auth_handshake_and_heartbeat(client: TestClient) -> None:
 
     bots = client.get("/api/bots", headers=auth_headers(token)).json()["data"]["items"]
     assert bots[0]["binding_status"] == "active"
+
+
+def test_openclaw_timeout_preserves_user_message_and_system_failure(
+    client: TestClient, monkeypatch
+) -> None:
+    user_id, token = register_user(client, "zhangsan", "E001", "张三")
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    mark_bot_connected(user_id, bot_id)
+    conversation = client.post(
+        "/api/conversations/ensure",
+        headers=auth_headers(token),
+        json={"target_type": "openclaw_bot", "target_id": bot_id},
+    ).json()["data"]["conversation"]
+
+    async def fail_request_reply(**_kwargs):
+        raise ApiError("MESSAGE_SEND_FAILED", "等待 BOT 回复超时", retryable=True)
+
+    monkeypatch.setattr(message_service.bot_gateway_sessions, "request_reply", fail_request_reply)
+
+    response = client.post(
+        f"/api/conversations/{conversation['id']}/messages",
+        headers=auth_headers(token),
+        json={"content": "hello", "content_type": "text"},
+    )
+
+    assert response.status_code == 200
+    messages = response.json()["data"]["messages"]
+    assert [item["sender_type"] for item in messages] == ["user", "system"]
+    assert messages[0]["content"] == "hello"
+    assert "暂时没有返回" in messages[1]["content"]
 
 
 def test_bot_gateway_pushes_status_changed_to_owner(client: TestClient) -> None:

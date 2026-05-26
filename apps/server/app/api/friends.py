@@ -56,6 +56,19 @@ def accept_friend_request(
     return ok({"relationship": "friend"}, request_id_from(request))
 
 
+@router.post("/{user_id}/reject")
+def reject_friend_request(
+    user_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    current: Annotated[User, Depends(current_user)],
+):
+    friendship = incoming_pending_friendship(user_id, db, current)
+    db.delete(friendship)
+    db.commit()
+    return ok({"relationship": "none"}, request_id_from(request))
+
+
 def relationship_for(current_user_id: int, friendship: Friendship) -> str:
     if friendship.status == "accepted":
         return "friend"

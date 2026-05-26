@@ -832,6 +832,49 @@ def test_accept_friend_request_requires_incoming_request(client: TestClient) -> 
     assert response.json()["error"]["code"] == "NOT_FOUND"
 
 
+def test_reject_incoming_friend_request_resets_relationships(client: TestClient) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+
+    response = client.post(f"/api/friends/{alice_id}/reject", headers=auth_headers(bob_token))
+
+    assert response.status_code == 200
+    assert response.json()["data"]["relationship"] == "none"
+
+    alice_users = client.get("/api/users", headers=auth_headers(alice_token)).json()["data"]["items"]
+    bob_users = client.get("/api/users", headers=auth_headers(bob_token)).json()["data"]["items"]
+    assert next(item for item in alice_users if item["id"] == bob_id)["relationship"] == "none"
+    assert next(item for item in bob_users if item["id"] == alice_id)["relationship"] == "none"
+
+
+def test_reject_incoming_friend_request_keeps_direct_conversation_blocked(client: TestClient) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+    client.post(f"/api/friends/{alice_id}/reject", headers=auth_headers(bob_token))
+
+    response = client.post(
+        "/api/conversations/ensure",
+        headers=auth_headers(alice_token),
+        json={"target_type": "user", "target_id": str(bob_id)},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_reject_friend_request_requires_incoming_request(client: TestClient) -> None:
+    _, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, _ = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+
+    response = client.post(f"/api/friends/{bob_id}/reject", headers=auth_headers(alice_token))
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "NOT_FOUND"
+
+
 def test_bot_message_roundtrip_waits_for_connected_bot_reply(client: TestClient, monkeypatch) -> None:
     user_id, token = register_user(client, "zhangsan", "E001", "张三")
     bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)

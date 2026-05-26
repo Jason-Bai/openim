@@ -127,6 +127,14 @@ export function acceptFriend(token: string, userId: number) {
   );
 }
 
+export function rejectFriend(token: string, userId: number) {
+  return api<{ relationship: User["relationship"] }>(
+    `/friends/${userId}/reject`,
+    { method: "POST" },
+    token
+  );
+}
+
 export function bots(token: string) {
   return api<{ items: BotItem[] }>("/bots", {}, token);
 }

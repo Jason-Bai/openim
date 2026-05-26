@@ -2,15 +2,35 @@ id: REQ-employee-friendship-chat
 title: Employee friendship approval and direct chat completion
 type: feature
 status: active
-phase: planned
+phase: code_review
 
 github:
-  issue: null
-  pr: null
+  issue: https://github.com/Jason-Bai/openim/issues/9
+  issues:
+    - https://github.com/Jason-Bai/openim/issues/9
+    - https://github.com/Jason-Bai/openim/issues/10
+  pr: https://github.com/Jason-Bai/openim/pull/11
+  prs:
+    - https://github.com/Jason-Bai/openim/pull/11
+    - https://github.com/Jason-Bai/openim/pull/12
 
 branch:
-  name: docs/prd-employee-friendship-chat
-  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/prd-employee-friendship-chat
+  name: feature/9-accept-friend-request
+  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-9-accept-friend-request
+
+execution_items:
+  - issue: https://github.com/Jason-Bai/openim/issues/9
+    pr: https://github.com/Jason-Bai/openim/pull/11
+    branch: feature/9-accept-friend-request
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-9-accept-friend-request
+    phase: code_review
+    status: active
+  - issue: https://github.com/Jason-Bai/openim/issues/10
+    pr: https://github.com/Jason-Bai/openim/pull/12
+    branch: feature/10-reject-friend-request
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-10-reject-friend-request
+    phase: code_review
+    status: active
 
 docs:
   prd: docs/product/requirements/REQ-employee-friendship-chat.md
@@ -42,3 +62,4 @@ notes:
   - GitHub execution Issues will be created only after PRD, technical design, implementation plan review, and user confirmation.
   - Issue split should use independent minimal feature slices rather than default frontend/backend layers.
   - Implementation plan passed agent plan review and user confirmation.
+  - Pull requests are draft while code review and PR sequencing are in progress.

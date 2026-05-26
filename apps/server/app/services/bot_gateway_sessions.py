@@ -22,13 +22,15 @@ class BotGatewaySessionRegistry:
     def register(self, bot_id: str, websocket: WebSocket) -> None:
         self._sessions[bot_id] = BotGatewaySession(bot_id=bot_id, websocket=websocket)
 
-    def unregister(self, bot_id: str, websocket: WebSocket) -> None:
+    def unregister(self, bot_id: str, websocket: WebSocket) -> bool:
         current = self._sessions.get(bot_id)
         if current and current.websocket is websocket:
             for future in current.pending.values():
                 if not future.done():
                     future.set_exception(ApiError("BOT_STATUS_SYNC_FAILED", "BOT 已断开连接"))
             self._sessions.pop(bot_id, None)
+            return True
+        return False
 
     async def request_reply(
         self,

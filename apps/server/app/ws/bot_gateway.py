@@ -2,7 +2,6 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errors import ApiError
@@ -65,7 +64,7 @@ async def bot_gateway(websocket: WebSocket) -> None:
                     bot.owner_user_id,
                     {
                         "type": "bot.status_changed",
-                        "bot": _status_event_bot(db, bot),
+                        "bot": serialize_bot_for_owner(db, bot),
                     },
                 )
                 await websocket.send_json(
@@ -132,19 +131,19 @@ async def bot_gateway(websocket: WebSocket) -> None:
         pass
     finally:
         if bot is not None:
-            bot_gateway_sessions.unregister(bot.bot_id, websocket)
-            bot.connect_status = "disconnected"
-            db.commit()
-            try:
-                await employee_ws_sessions.send_to_user(
-                    bot.owner_user_id,
-                    {
-                        "type": "bot.status_changed",
-                        "bot": _status_event_bot(db, bot),
-                    },
-                )
-            except Exception:
-                pass
+            if bot_gateway_sessions.unregister(bot.bot_id, websocket):
+                bot.connect_status = "disconnected"
+                db.commit()
+                try:
+                    await employee_ws_sessions.send_to_user(
+                        bot.owner_user_id,
+                        {
+                            "type": "bot.status_changed",
+                            "bot": serialize_bot_for_owner(db, bot),
+                        },
+                    )
+                except Exception:
+                    pass
         db.close()
 
 
@@ -158,12 +157,3 @@ async def _send_error(websocket: WebSocket, message: dict[str, Any], code: str, 
             "error": {"code": code, "message": text, "retryable": False},
         }
     )
-
-
-def _status_event_bot(db: Session, bot: Bot) -> dict[str, object]:
-    serialized = serialize_bot_for_owner(db, bot)
-    return {
-        "bot_id": serialized["bot_id"],
-        "connect_status": serialized["connect_status"],
-        "binding_status": serialized["binding_status"],
-    }

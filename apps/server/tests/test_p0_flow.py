@@ -10,6 +10,7 @@ from app.db.runtime_schema import ensure_sqlite_runtime_schema
 from app.db.session import SessionLocal, engine
 from app.models.bot import Bot, UserBotBinding
 from app.models.friendship import Friendship
+from app.services.bot_gateway_sessions import bot_gateway_sessions
 from tests.conftest import auth_headers
 
 
@@ -87,6 +88,13 @@ def receive_json_with_timeout(websocket, timeout: float = 1.0) -> dict:
     if isinstance(item, BaseException):
         raise item
     return item
+
+
+def maybe_receive_json_with_timeout(websocket, timeout: float = 0.2) -> dict | None:
+    try:
+        return receive_json_with_timeout(websocket, timeout)
+    except AssertionError:
+        return None
 
 
 def mark_bot_connected(user_id: int, bot_id: str) -> None:
@@ -309,14 +317,13 @@ def test_bot_gateway_pushes_status_changed_to_owner(client: TestClient) -> None:
 
             event = receive_json_with_timeout(employee_websocket)
 
-    assert event == {
-        "type": "bot.status_changed",
-        "bot": {
-            "bot_id": bot_id,
-            "connect_status": "connected",
-            "binding_status": "active",
-        },
-    }
+    assert event["type"] == "bot.status_changed"
+    assert event["bot"]["bot_id"] == bot_id
+    assert event["bot"]["connect_status"] == "connected"
+    assert event["bot"]["binding_status"] == "active"
+    assert event["bot"]["name"] == "OpenClaw 员工助手"
+    assert event["bot"]["last_seen_at"] is not None
+    assert event["bot"]["first_connected_at"] is not None
 
 
 def test_bot_gateway_pushes_disconnected_on_socket_close(client: TestClient) -> None:
@@ -354,6 +361,52 @@ def test_bot_gateway_pushes_disconnected_on_socket_close(client: TestClient) -> 
     assert event["bot"]["bot_id"] == bot_id
     assert event["bot"]["connect_status"] == "disconnected"
     assert event["bot"]["binding_status"] == "active"
+    assert "last_seen_at" in event["bot"]
+    assert "first_connected_at" in event["bot"]
+
+
+def test_bot_gateway_does_not_disconnect_when_closing_socket_is_not_current(
+    client: TestClient,
+) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    connect_payload = json.loads(command(client, token, f"/connect {bot_id}")["content"])
+
+    try:
+        with client.websocket_connect(f"/ws?token={token}") as employee_websocket:
+            with client.websocket_connect("/bot-gateway/ws") as bot_websocket:
+                bot_websocket.send_json(
+                    {
+                        "type": "auth",
+                        "request_id": "req_auth",
+                        "protocol_version": "bot-v1",
+                        "bot_id": bot_id,
+                        "token": connect_payload["token"],
+                    }
+                )
+                assert bot_websocket.receive_json()["ok"] is True
+                bot_websocket.send_json(
+                    {
+                        "type": "handshake",
+                        "request_id": "req_handshake",
+                        "protocol_version": "bot-v1",
+                        "bot_id": bot_id,
+                        "runtime": {"name": "test", "version": "0.1.0"},
+                    }
+                )
+                assert bot_websocket.receive_json()["type"] == "handshake.result"
+                assert receive_json_with_timeout(employee_websocket)["bot"]["connect_status"] == "connected"
+                bot_gateway_sessions.register(bot_id, object())
+
+            event = maybe_receive_json_with_timeout(employee_websocket)
+    finally:
+        bot_gateway_sessions._sessions.pop(bot_id, None)
+
+    with SessionLocal() as db:
+        status = db.query(Bot).filter(Bot.bot_id == bot_id).one().connect_status
+
+    assert event is None
+    assert status == "connected"
 
 
 def test_startup_cleanup_resets_runtime_bot_connections(client: TestClient) -> None:

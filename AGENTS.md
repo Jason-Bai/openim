@@ -111,6 +111,7 @@ Required gates for non-trivial work:
 5. Write or update PRD/UX docs when the change affects product behavior or UI.
 6. Write or update technical design and complete technical review before coding.
 7. Write or update the implementation plan before coding.
-8. Implement only the approved scope in the dedicated branch/worktree.
-9. Run relevant verification commands and update test/deployment evidence.
-10. Open a PR with linked Issue, registry, docs, verification evidence, risks, and rollback notes.
+8. Sync local `main` to `origin/main` with `git fetch origin --prune` and `git pull --ff-only origin main` before creating a worktree.
+9. Implement only the approved scope in the dedicated branch/worktree created from updated `main`.
+10. Run relevant verification commands and update test/deployment evidence.
+11. Open a PR with linked Issue, registry, docs, verification evidence, risks, and rollback notes.

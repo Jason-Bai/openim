@@ -171,6 +171,16 @@ The plan should break work into small verifiable tasks. Each task should name fi
 
 Do not develop directly on `main`.
 
+Before creating a branch or worktree, update the local `main` checkout to the latest remote stable baseline:
+
+```bash
+git fetch origin --prune
+git switch main
+git pull --ff-only origin main
+```
+
+If the local `main` worktree has unrelated uncommitted files, do not overwrite them. Either leave them untouched if they are untracked and unrelated, or stop and ask before proceeding.
+
 Branch naming:
 
 ```text
@@ -180,7 +190,7 @@ docs/<issue-number>-short-name
 chore/<issue-number>-short-name
 ```
 
-Use one worktree per independent Issue. Parallel work should not share one checkout.
+Create the branch/worktree from the updated local `main`. Use one worktree per independent Issue. Parallel work should not share one checkout.
 
 Record `branch.name` and `branch.worktree` in the registry file before development starts.
 
@@ -278,10 +288,11 @@ Agents working in this repository must follow this sequence for non-trivial work
 3. Clarify product requirements.
 4. Write or update PRD/design docs when needed.
 5. Write or update technical design and implementation plan.
-6. Create a dedicated branch and worktree.
-7. Update the registry at each gate.
-8. Implement only the approved scope.
-9. Run verification.
-10. Prepare PR-ready summary.
+6. Sync local `main` to `origin/main`.
+7. Create a dedicated branch and worktree from the updated `main`.
+8. Update the registry at each gate.
+9. Implement only the approved scope.
+10. Run verification.
+11. Prepare PR-ready summary.
 
 Agents must not treat an informal chat request as approval to skip the Issue, registry, branch, design, review, testing, deployment, or verification gates when the work is product or engineering significant.

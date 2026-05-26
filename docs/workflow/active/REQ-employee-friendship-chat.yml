@@ -1,0 +1,43 @@
+id: REQ-employee-friendship-chat
+title: Employee friendship approval and direct chat completion
+type: feature
+status: active
+phase: requirement_review
+
+github:
+  issue: null
+  pr: null
+
+branch:
+  name: docs/prd-employee-friendship-chat
+  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/prd-employee-friendship-chat
+
+docs:
+  prd: docs/product/requirements/REQ-employee-friendship-chat.md
+  ux: null
+  technical_design: null
+  implementation_plan: null
+  test_report: null
+  release_note: null
+
+reviews:
+  product_review: pending
+  ux_review: pending
+  technical_review: pending
+  code_review: pending
+  qa_review: pending
+
+deployment:
+  environment: null
+  deployed_at: null
+  smoke_test: null
+
+timestamps:
+  created_at: "2026-05-26"
+  updated_at: "2026-05-26"
+
+blockers: []
+dependencies: []
+notes:
+  - GitHub execution Issues will be created only after PRD and technical design approval.
+  - Issue split should use independent minimal feature slices rather than default frontend/backend layers.

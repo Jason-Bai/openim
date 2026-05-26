@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   BotItem,
+  BotStatusChangedEvent,
   ContactItem,
   Conversation,
   ConversationMessage,
@@ -650,12 +651,21 @@ function useEmployeeWebSocket(token: string, queryClient: ReturnType<typeof useQ
         type: string;
         message?: ConversationMessage;
         conversation?: Conversation;
+        bot?: BotItem;
       };
       if (payload.type === "message.new" && payload.message) {
         mergeMessageCache(queryClient, payload.message.conversation_id, [payload.message]);
       }
       if (payload.type === "conversation.updated" && payload.conversation) {
         upsertConversationCache(queryClient, payload.conversation);
+      }
+      if (payload.type === "bot.status_changed" && payload.bot) {
+        const botPayload = payload as BotStatusChangedEvent;
+        queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
+          current ? updateContactBot(current, botPayload.bot) : current
+        );
+        queryClient.invalidateQueries({ queryKey: ["contacts"] });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       }
     };
     return () => socket.close();
@@ -769,6 +779,14 @@ function updateContactUserRelationship(
         : item
     )
   };
+}
+
+function updateContactBot(current: { ai: ContactItem[]; all: ContactItem[] }, bot: BotItem) {
+  const update = (item: ContactItem): ContactItem =>
+    item.contact_type === "openclaw_bot" && item.bot.bot_id === bot.bot_id
+      ? { ...item, title: bot.name, subtitle: bot.bot_id, online: bot.connect_status === "connected", bot }
+      : item;
+  return { ai: current.ai.map(update), all: current.all.map(update) };
 }
 
 function relationshipText(value: User["relationship"]) {

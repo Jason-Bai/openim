@@ -21,6 +21,11 @@ export type BotItem = {
   first_connected_at: string | null;
 };
 
+export type BotStatusChangedEvent = {
+  type: "bot.status_changed";
+  bot: BotItem;
+};
+
 export type ContactItem =
   | {
       id: "default_bot";

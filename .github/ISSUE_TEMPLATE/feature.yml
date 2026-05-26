@@ -36,15 +36,29 @@ body:
   - type: textarea
     id: docs
     attributes:
-      label: Linked docs
-      description: Link PRD, UX design, technical design, and implementation plan when available.
+      label: Linked docs and registry
+      description: Link the registry file, PRD, UX design, technical design, and implementation plan when available.
       placeholder: |
+        Registry:
         PRD:
         UX:
         Technical design:
         Implementation plan:
     validations:
       required: false
+  - type: dropdown
+    id: starting_phase
+    attributes:
+      label: Starting phase
+      description: Where should this work begin?
+      options:
+        - idea
+        - requirement_draft
+        - requirement_review
+        - technical_design
+        - planned
+    validations:
+      required: true
   - type: textarea
     id: risks
     attributes:

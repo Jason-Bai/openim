@@ -1,0 +1,41 @@
+id: REQ-0000
+title: Short requirement title
+type: feature
+status: active
+phase: idea
+
+github:
+  issue: null
+  pr: null
+
+branch:
+  name: null
+  worktree: null
+
+docs:
+  prd: null
+  ux: null
+  technical_design: null
+  implementation_plan: null
+  test_report: null
+  release_note: null
+
+reviews:
+  product_review: pending
+  ux_review: not_required
+  technical_review: pending
+  code_review: pending
+  qa_review: pending
+
+deployment:
+  environment: null
+  deployed_at: null
+  smoke_test: null
+
+timestamps:
+  created_at: "YYYY-MM-DD"
+  updated_at: "YYYY-MM-DD"
+
+blockers: []
+dependencies: []
+notes: []

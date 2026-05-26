@@ -105,9 +105,13 @@ Branch naming:
 Required gates for non-trivial work:
 
 1. Confirm or create the GitHub Issue.
-2. Clarify product requirements and acceptance criteria.
-3. Write or update PRD/UX docs when the change affects product behavior or UI.
-4. Write or update technical design and implementation plan before coding.
-5. Implement only the approved scope in the dedicated branch/worktree.
-6. Run relevant verification commands.
-7. Open a PR with linked Issue, docs, verification evidence, risks, and rollback notes.
+2. Create or update the delivery registry file under `docs/workflow/active/`.
+3. Clarify product requirements and acceptance criteria.
+4. Complete requirement review before technical design.
+5. Write or update PRD/UX docs when the change affects product behavior or UI.
+6. Write or update technical design and complete technical review before coding.
+7. Write or update the implementation plan before coding.
+8. Sync local `main` to `origin/main` with `git fetch origin --prune` and `git pull --ff-only origin main` before creating a worktree.
+9. Implement only the approved scope in the dedicated branch/worktree created from updated `main`.
+10. Run relevant verification commands and update test/deployment evidence.
+11. Open a PR with linked Issue, registry, docs, verification evidence, risks, and rollback notes.

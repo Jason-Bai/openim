@@ -667,7 +667,6 @@ function useEmployeeWebSocket(token: string, queryClient: ReturnType<typeof useQ
         queryClient.setQueryData<{ items: Conversation[] }>(["conversations"], (current) =>
           current ? updateConversationBotStatus(current, bot) : current
         );
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       }
     };
     return () => socket.close();

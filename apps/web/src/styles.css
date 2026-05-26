@@ -1,0 +1,299 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.loginPanel {
+  width: min(420px, 100%);
+  background: #fff;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.shell {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 168px 320px 1fr;
+  overflow: hidden;
+}
+
+.mainMenu {
+  background: #152033;
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mainMenu .ant-btn-text {
+  color: #d8e2ef;
+}
+
+.mainMenu .ant-btn-text:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.menuSpacer {
+  flex: 1;
+}
+
+.accountFooter {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.accountName {
+  color: #eef4ff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.accountFooter .ant-btn {
+  justify-content: center;
+}
+
+.contacts {
+  background: #fff;
+  border-right: 1px solid #e5e9f2;
+  padding: 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyList {
+  color: #7b8798;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px;
+  border: 1px dashed #d9e0ea;
+  border-radius: 8px;
+  background: #fafcff;
+}
+
+.contactItem {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 8px 10px !important;
+  border-block-end: none !important;
+}
+
+.contactItem:hover {
+  background: #f4f7fb;
+}
+
+.contactItem.selected {
+  background: #eaf2ff;
+}
+
+.contactLine {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.contactIcon {
+  color: #526173;
+  display: flex;
+  align-items: center;
+}
+
+.contactText {
+  min-width: 0;
+}
+
+.contactTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #172033;
+  font-weight: 600;
+}
+
+.contactTitle span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contactSubtitle {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.onlineDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #20b26b;
+  flex: 0 0 auto;
+}
+
+.chat {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.guidePanel,
+.profilePanel {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 48px;
+  background: #f5f7fb;
+}
+
+.guidePanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.profilePanel {
+  background: #fff;
+}
+
+.profilePanel h3 {
+  margin: 0 0 4px;
+}
+
+.profileDetails {
+  margin-top: 28px;
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+}
+
+.profileRow {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.chatHeader {
+  height: 76px;
+  background: #fff;
+  border-bottom: 1px solid #e5e9f2;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.chatHeader h4 {
+  margin: 0;
+}
+
+.messageList {
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.message {
+  display: flex;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: min(720px, 80%);
+  white-space: pre-wrap;
+  background: #fff;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+  padding: 12px 14px;
+  line-height: 1.55;
+}
+
+.message.user .bubble {
+  background: #1668dc;
+  color: #fff;
+  border-color: #1668dc;
+}
+
+.codeBlock {
+  position: relative;
+  width: min(760px, 80vw);
+  background: #101827;
+  color: #e6edf7;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.codeBlock pre {
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.copyButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.commandBar {
+  background: #fff;
+  border-top: 1px solid #e5e9f2;
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .mainMenu,
+  .contacts {
+    display: none;
+  }
+}

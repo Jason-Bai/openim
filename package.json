@@ -1,0 +1,16 @@
+{
+  "name": "openim",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/openclaw-bot-plugin"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "e2e:p0": "node scripts/e2e-p0.mjs",
+    "e2e:p0:plugin": "npm run build -w packages/openclaw-bot-plugin && node scripts/e2e-p0-plugin.mjs",
+    "e2e:openclaw:local": "npm run build -w packages/openclaw-bot-plugin && node scripts/e2e-openclaw-local.mjs",
+    "bridge:openclaw:local": "npm run build -w packages/openclaw-bot-plugin && node scripts/openclaw-local-bridge.mjs"
+  }
+}

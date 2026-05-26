@@ -652,7 +652,7 @@ function useEmployeeWebSocket(token: string, queryClient: ReturnType<typeof useQ
         message?: ConversationMessage;
         conversation?: Conversation;
         bot?: BotItem;
-      };
+      } | BotStatusChangedEvent;
       if (payload.type === "message.new" && payload.message) {
         mergeMessageCache(queryClient, payload.message.conversation_id, [payload.message]);
       }
@@ -660,11 +660,13 @@ function useEmployeeWebSocket(token: string, queryClient: ReturnType<typeof useQ
         upsertConversationCache(queryClient, payload.conversation);
       }
       if (payload.type === "bot.status_changed" && payload.bot) {
-        const botPayload = payload as BotStatusChangedEvent;
+        const bot = payload.bot;
         queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
-          current ? updateContactBot(current, botPayload.bot) : current
+          current ? updateContactBot(current, bot) : current
         );
-        queryClient.invalidateQueries({ queryKey: ["contacts"] });
+        queryClient.setQueryData<{ items: Conversation[] }>(["conversations"], (current) =>
+          current ? updateConversationBotStatus(current, bot) : current
+        );
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       }
     };
@@ -787,6 +789,15 @@ function updateContactBot(current: { ai: ContactItem[]; all: ContactItem[] }, bo
       ? { ...item, title: bot.name, subtitle: bot.bot_id, online: bot.connect_status === "connected", bot }
       : item;
   return { ai: current.ai.map(update), all: current.all.map(update) };
+}
+
+function updateConversationBotStatus(current: { items: Conversation[] }, bot: BotItem) {
+  const online = bot.connect_status === "connected";
+  return {
+    items: current.items.map((item) =>
+      item.target_type === "openclaw_bot" && item.target_id === bot.bot_id ? { ...item, online } : item
+    )
+  };
 }
 
 function relationshipText(value: User["relationship"]) {

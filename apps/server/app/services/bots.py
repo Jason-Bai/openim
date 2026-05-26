@@ -71,6 +71,33 @@ def serialize_bot_for_owner(db: Session, bot: Bot) -> dict[str, object]:
     }
 
 
+def diagnose_bot(db: Session, user_id: int, bot_id: str) -> dict[str, object]:
+    bot = get_owned_bot(db, user_id, bot_id)
+    binding = db.scalar(
+        select(UserBotBinding).where(
+            UserBotBinding.user_id == user_id,
+            UserBotBinding.bot_id == bot.bot_id,
+            UserBotBinding.status == "active",
+        )
+    )
+    latest_log = db.scalar(
+        select(BotConnectionLog)
+        .where(BotConnectionLog.bot_id == bot.bot_id)
+        .order_by(BotConnectionLog.created_at.desc(), BotConnectionLog.id.desc())
+        .limit(1)
+    )
+    return {
+        "bot_id": bot.bot_id,
+        "name": bot.name,
+        "connect_status": bot.connect_status,
+        "binding_status": binding.status if binding else "none",
+        "last_seen_at": utc_iso(bot.last_seen_at),
+        "last_event_type": latest_log.event_type if latest_log else None,
+        "last_error_code": latest_log.error_code if latest_log else None,
+        "token_status": "revealed_once" if bot.token_revealed_at else "not_revealed",
+    }
+
+
 def reset_runtime_bot_connections() -> None:
     with SessionLocal() as db:
         db.execute(

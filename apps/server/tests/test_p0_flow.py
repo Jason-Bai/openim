@@ -244,6 +244,27 @@ def test_default_bot_creates_connects_and_masks_token(client: TestClient) -> Non
     assert regenerated_payload["token"] != payload["token"]
 
 
+def test_default_bot_diagnose_connected_bot(client: TestClient) -> None:
+    user_id, token = register_user(client, "zhangsan", "E001", "张三")
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    mark_bot_connected(user_id, bot_id)
+
+    reply = command(client, token, f"/diagnose {bot_id}")
+
+    assert f"BOT_ID: {bot_id}" in reply["content"]
+    assert "连接状态: connected" in reply["content"]
+    assert "绑定状态: active" in reply["content"]
+    assert "建议: 可以开始对话" in reply["content"]
+
+
+def test_default_bot_diagnose_requires_bot_id(client: TestClient) -> None:
+    token = register_and_login(client)
+
+    reply = command(client, token, "/diagnose")
+
+    assert "请输入要诊断的 BOT ID" in reply["content"]
+
+
 def test_bot_gateway_auth_handshake_and_heartbeat(client: TestClient) -> None:
     token = register_and_login(client)
     bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)

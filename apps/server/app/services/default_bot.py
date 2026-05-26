@@ -8,6 +8,7 @@ from app.services.bots import (
     connect_info,
     create_bot_slot,
     delete_bot,
+    diagnose_bot,
     disconnect_bot,
     json_block,
     list_user_bots,
@@ -24,6 +25,7 @@ HELP_TEXT = """你好！我是你的默认助手 BOT
 /delete-bot {bot_id}  删除 BOT
 /connect {bot_id}     获取连接信息
 /disconnect {bot_id}  断开 BOT
+/diagnose {bot_id}    诊断 BOT 连接状态
 """
 
 
@@ -84,6 +86,10 @@ def handle_command(db: Session, user: User, command: str) -> dict[str, str]:
         bot = disconnect_bot(db, user.id, parts[1])
         db.commit()
         return text_reply(f"BOT {bot.bot_id} 已断开连接")
+    if name == "/diagnose":
+        if len(parts) < 2:
+            return text_reply("请输入要诊断的 BOT ID：/diagnose {bot_id}")
+        return text_reply(_format_diagnosis(diagnose_bot(db, user.id, parts[1])))
     if name == "/delete-bot":
         if len(parts) < 2:
             return text_reply("请输入要删除的 BOT ID：/delete-bot {bot_id}")
@@ -129,6 +135,32 @@ def _format_bots(items: list[dict[str, object]]) -> str:
     return "\n".join(lines)
 
 
+def _format_diagnosis(data: dict[str, object]) -> str:
+    return "\n".join(
+        [
+            f"BOT_ID: {data['bot_id']}",
+            f"名称: {data['name']}",
+            f"连接状态: {data['connect_status']}",
+            f"绑定状态: {data['binding_status']}",
+            f"最后在线: {data['last_seen_at'] or '无'}",
+            f"最后事件: {data['last_event_type'] or '无'}",
+            f"最后错误: {data['last_error_code'] or '无'}",
+            f"token 状态: {data['token_status']}",
+            f"建议: {_diagnosis_advice(data)}",
+        ]
+    )
+
+
+def _diagnosis_advice(data: dict[str, object]) -> str:
+    if data["connect_status"] == "connected" and data["binding_status"] == "active":
+        return "可以开始对话"
+    if data["connect_status"] in {"pending", "disconnected"}:
+        return f"请重新获取连接信息并启动 BOT：/connect {data['bot_id']}"
+    if data["connect_status"] == "authenticating":
+        return "BOT 正在认证，请稍后重试"
+    return "请检查 BOT 连接状态"
+
+
 def _select_bot_prompt(db: Session, user_id: int, usage: str) -> str:
     items = list_user_bots(db, user_id)
     if not items:
@@ -145,4 +177,3 @@ def text_reply(content: str) -> dict[str, str]:
 
 def code_reply(content: str) -> dict[str, str]:
     return {"reply_type": "code", "content": content}
-

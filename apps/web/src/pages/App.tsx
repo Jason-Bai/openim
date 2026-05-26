@@ -19,6 +19,7 @@ import {
   ensureConversation,
   login,
   register,
+  rejectFriend,
   sendConversationMessage,
 } from "../api/openim";
 import { CopyableCodeBlock } from "../components/CopyableCodeBlock";
@@ -220,6 +221,26 @@ function ChatPage({
     }
   });
 
+  const rejectFriendMutation = useMutation({
+    mutationFn: async (userId: number) => ({ userId, result: await rejectFriend(token, userId) }),
+    onSuccess: ({ userId, result }) => {
+      message.success("已拒绝好友申请");
+      queryClient.setQueryData<{ items: User[] }>(["users"], (current) => ({
+        items: (current?.items ?? []).map((item) =>
+          item.id === userId ? { ...item, relationship: result.relationship } : item
+        )
+      }));
+      queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
+        current ? updateContactUserRelationship(current, userId, result.relationship) : current
+      );
+      setSelected((current) => updateSelectedUserRelationship(current, userId, result.relationship));
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+    onError: (err) => {
+      message.error(err instanceof ApiError ? err.message : "拒绝好友申请失败");
+    }
+  });
+
   const sendMutation = useMutation({
     mutationFn: (vars: { conversationId: string; content: string; tempId: string }) =>
       sendConversationMessage(token, vars.conversationId, vars.content),
@@ -333,9 +354,11 @@ function ChatPage({
             target={selectedView.target}
             adding={addFriendMutation.isPending}
             accepting={acceptFriendMutation.isPending}
+            rejecting={rejectFriendMutation.isPending}
             opening={ensureMutation.isPending}
             onAddFriend={(userId) => addFriendMutation.mutate(userId)}
             onAcceptFriend={(userId) => acceptFriendMutation.mutate(userId)}
+            onRejectFriend={(userId) => rejectFriendMutation.mutate(userId)}
             onOpenSession={() => ensureMutation.mutate(selectedView.target)}
           />
         ) : (
@@ -474,17 +497,21 @@ function TargetProfile({
   target,
   adding,
   accepting,
+  rejecting,
   opening,
   onAddFriend,
   onAcceptFriend,
+  onRejectFriend,
   onOpenSession
 }: {
   target: ProfileTarget;
   adding: boolean;
   accepting: boolean;
+  rejecting: boolean;
   opening: boolean;
   onAddFriend: (userId: number) => void;
   onAcceptFriend: (userId: number) => void;
+  onRejectFriend: (userId: number) => void;
   onOpenSession: () => void;
 }) {
   if (target.type === "system_default_bot") {
@@ -530,6 +557,9 @@ function TargetProfile({
           <Typography.Text type="secondary">对方已申请添加你</Typography.Text>
           <Button type="primary" loading={accepting} onClick={() => onAcceptFriend(target.user.id)}>
             接受
+          </Button>
+          <Button loading={rejecting} onClick={() => onRejectFriend(target.user.id)}>
+            拒绝
           </Button>
         </>
       )}

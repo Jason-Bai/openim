@@ -174,7 +174,16 @@ def delete_bot(db: Session, user_id: int, bot_id: str) -> None:
 
 def authenticate_bot(db: Session, bot_id: str, token: str) -> Bot:
     bot = db.scalar(select(Bot).where(Bot.bot_id == bot_id))
-    if not bot or not verify_secret(token, bot.token_hash):
+    if not bot:
+        raise ApiError("AUTH_FAILED", "bot_id 或 token 错误")
+    if not verify_secret(token, bot.token_hash):
+        log_connection(
+            db,
+            bot_id=bot.bot_id,
+            event_type="auth",
+            error_code="AUTH_FAILED",
+            error_message="bot_id 或 token 错误",
+        )
         raise ApiError("AUTH_FAILED", "bot_id 或 token 错误")
     if bot.connect_status == "revoked":
         raise ApiError("BOT_REVOKED", "BOT 已撤销")

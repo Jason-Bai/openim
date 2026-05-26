@@ -115,6 +115,7 @@ async def bot_gateway(websocket: WebSocket) -> None:
     except TimeoutError:
         await websocket.close(code=4000, reason="AUTH_TIMEOUT")
     except ApiError as exc:
+        db.commit()
         if websocket.client_state.name != "DISCONNECTED":
             await websocket.send_json(
                 {

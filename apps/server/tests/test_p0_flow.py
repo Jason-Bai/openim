@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from app.db.runtime_schema import ensure_sqlite_runtime_schema
 from app.db.session import SessionLocal, engine
-from app.models.bot import Bot, UserBotBinding
+from app.models.bot import Bot, BotConnectionLog, UserBotBinding
 from app.models.friendship import Friendship
 from app.services.bot_gateway_sessions import bot_gateway_sessions
 from app.ws.employee import EmployeeWebSocketSessions
@@ -263,6 +263,84 @@ def test_default_bot_diagnose_requires_bot_id(client: TestClient) -> None:
     reply = command(client, token, "/diagnose")
 
     assert "请输入要诊断的 BOT ID" in reply["content"]
+
+
+def test_default_bot_diagnose_reports_auth_failed_for_bad_token(client: TestClient) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    command(client, token, f"/connect {bot_id}")
+
+    with client.websocket_connect("/bot-gateway/ws") as websocket:
+        websocket.send_json(
+            {
+                "type": "auth",
+                "request_id": "req_bad_auth",
+                "protocol_version": "bot-v1",
+                "bot_id": bot_id,
+                "token": "ocb_live_bad_token",
+            }
+        )
+        result = websocket.receive_json()
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "AUTH_FAILED"
+    with SessionLocal() as db:
+        latest_log = (
+            db.query(BotConnectionLog)
+            .filter(BotConnectionLog.bot_id == bot_id)
+            .order_by(BotConnectionLog.created_at.desc(), BotConnectionLog.id.desc())
+            .first()
+        )
+    assert latest_log is not None
+    assert latest_log.error_code == "AUTH_FAILED"
+
+    reply = command(client, token, f"/diagnose {bot_id}")
+
+    assert "最后错误: AUTH_FAILED" in reply["content"]
+
+
+def test_default_bot_diagnose_does_not_leak_token_details(client: TestClient) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    connect_payload = json.loads(command(client, token, f"/connect {bot_id}")["content"])
+    with SessionLocal() as db:
+        bot = db.query(Bot).filter(Bot.bot_id == bot_id).one()
+        bot.token_last4 = "ZZ9Q"
+        token_hash = bot.token_hash
+        db.commit()
+    masked_reply = command(client, token, f"/connect {bot_id}")
+    masked_token = re.search(r"masked token: (ocb_live_\*\*\*\*_[A-Za-z0-9]+)", masked_reply["content"]).group(1)
+
+    reply = command(client, token, f"/diagnose {bot_id}")
+    content = reply["content"]
+
+    assert connect_payload["token"] not in content
+    assert masked_token not in content
+    assert "ZZ9Q" not in content
+    assert token_hash not in content
+
+
+def test_default_bot_diagnose_rejects_non_owner_without_private_details(client: TestClient) -> None:
+    _, owner_token = register_user(client, "zhangsan", "E001", "张三")
+    _, other_token = register_user(client, "lisi", "E002", "李四")
+    bot_id = re.search(
+        r"BOT_ID: (bot_[A-Z0-9]+)", command(client, owner_token, "/new-bot")["content"]
+    ).group(1)
+    connect_payload = json.loads(command(client, owner_token, f"/connect {bot_id}")["content"])
+    with SessionLocal() as db:
+        token_hash = db.query(Bot).filter(Bot.bot_id == bot_id).one().token_hash
+
+    response = client.post(
+        "/api/default-bot/commands",
+        headers=auth_headers(other_token),
+        json={"command": f"/diagnose {bot_id}"},
+    )
+
+    assert response.status_code == 403
+    response_text = response.text
+    assert connect_payload["token"] not in response_text
+    assert token_hash not in response_text
+    assert "OpenClaw 员工助手" not in response_text
 
 
 def test_bot_gateway_auth_handshake_and_heartbeat(client: TestClient) -> None:

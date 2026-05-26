@@ -100,6 +100,12 @@ npm run e2e:p0
 npm run e2e:p0:plugin
 ```
 
+重复验证 P0.5 联系人 + OpenClaw BOT 消息持久化 smoke：
+
+```bash
+npm run e2e:p05
+```
+
 使用本机 OpenClaw 地址验证 OpenClaw 可达性 + OpenIM 接入闭环：
 
 ```bash
@@ -127,6 +133,8 @@ OPENCLAW_AGENT_SMOKE=1 npm run e2e:openclaw:local
 ```
 
 `e2e:p0:plugin` 会额外通过 `@openim/openclaw-bot-plugin` 的构建产物完成连接，验证外部 BOT 按 npm package SDK 接入时也能完成绑定。
+
+`e2e:p05` 需要后端运行在 `127.0.0.1:8080`，会创建唯一测试员工和 OpenClaw BOT，验证 Plugin 回复写入会话历史，并确认通讯录 `ai` 与 `all` 同时包含默认 BOT 和 OpenClaw BOT。
 
 `e2e:openclaw:local` 会先确认本机 OpenClaw Control 和 Gateway 可达，再执行同一条 OpenIM 默认 BOT 接入链路。
 

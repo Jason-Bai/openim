@@ -4,9 +4,16 @@ const api = process.env.OPENIM_API_BASE_URL ?? "http://127.0.0.1:8080";
 const requestTimeoutMs = Number(process.env.OPENIM_E2E_REQUEST_TIMEOUT_MS ?? 10_000);
 const globalTimeoutMs = Number(process.env.OPENIM_E2E_GLOBAL_TIMEOUT_MS ?? 90_000);
 
-async function fetchJson(path, options = {}) {
+async function fetchJson(path, options = {}, globalSignal) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+  const abortRequest = () => controller.abort();
+  if (globalSignal?.aborted) {
+    abortRequest();
+  } else {
+    globalSignal?.addEventListener("abort", abortRequest, { once: true });
+  }
+
   try {
     const res = await fetch(api + path, {
       ...options,
@@ -19,31 +26,43 @@ async function fetchJson(path, options = {}) {
     return json.data;
   } catch (error) {
     if (error?.name === "AbortError") {
+      if (globalSignal?.aborted) {
+        throw new Error(`e2e:p05 timed out after ${globalTimeoutMs}ms`);
+      }
       throw new Error(`${path} timed out after ${requestTimeoutMs}ms`);
     }
     throw error;
   } finally {
     clearTimeout(timer);
+    globalSignal?.removeEventListener("abort", abortRequest);
   }
 }
 
-async function post(path, body, token) {
-  return fetchJson(path, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
+async function post(path, body, token, globalSignal) {
+  return fetchJson(
+    path,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+    globalSignal,
+  );
 }
 
-async function get(path, token) {
-  return fetchJson(path, {
-    headers: {
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
+async function get(path, token, globalSignal) {
+  return fetchJson(
+    path,
+    {
+      headers: {
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
     },
-  });
+    globalSignal,
+  );
 }
 
 function safeJson(value) {
@@ -69,39 +88,73 @@ function assertContact(items, id, contactType, label) {
   }
 }
 
-async function main() {
+function throwIfAborted(signal) {
+  if (signal.aborted) {
+    throw new Error(`e2e:p05 timed out after ${globalTimeoutMs}ms`);
+  }
+}
+
+async function abortable(promise, signal, label) {
+  throwIfAborted(signal);
+  return new Promise((resolve, reject) => {
+    const abort = () =>
+      reject(new Error(`${label} aborted: e2e:p05 timed out after ${globalTimeoutMs}ms`));
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", abort);
+    });
+  });
+}
+
+async function main(globalSignal) {
   const suffix = Date.now();
   const username = `p05_e2e_${suffix}`;
   const password = "Password123!";
   const employeeId = `P05${suffix}`;
   const replyText = `p05 plugin reply ${suffix}`;
 
-  await post("/api/auth/register", {
-    username,
-    password,
-    employee_id: employeeId,
-    real_name: "P05 E2E User",
-  });
-  const login = await post("/api/auth/login", { username, password });
+  await post(
+    "/api/auth/register",
+    {
+      username,
+      password,
+      employee_id: employeeId,
+      real_name: "P05 E2E User",
+    },
+    undefined,
+    globalSignal,
+  );
+  const login = await post("/api/auth/login", { username, password }, undefined, globalSignal);
   const token = login.access_token;
 
   const defaultConversation = await post(
     "/api/conversations/ensure",
     { target_type: "system_default_bot", target_id: "default_bot" },
     token,
+    globalSignal,
   );
   if (defaultConversation.conversation?.target_type !== "system_default_bot") {
-    throw new Error(`default bot conversation missing: ${JSON.stringify(defaultConversation)}`);
+    throw new Error(`default bot conversation missing: ${safeJson(defaultConversation)}`);
   }
 
-  const newBot = await post("/api/default-bot/commands", { command: "/new-bot" }, token);
+  const newBot = await post(
+    "/api/default-bot/commands",
+    { command: "/new-bot" },
+    token,
+    globalSignal,
+  );
   const match = newBot.content.match(/BOT_ID: (bot_[A-Z0-9]+)/);
   if (!match) {
     throw new Error(`BOT_ID not found in reply: ${newBot.content}`);
   }
   const botId = match[1];
 
-  const connect = await post("/api/default-bot/commands", { command: `/connect ${botId}` }, token);
+  const connect = await post(
+    "/api/default-bot/commands",
+    { command: `/connect ${botId}` },
+    token,
+    globalSignal,
+  );
   let info;
   try {
     info = JSON.parse(connect.content);
@@ -144,10 +197,11 @@ async function main() {
   });
 
   try {
-    await client.connect();
+    await abortable(client.connect(), globalSignal, "plugin connect");
     clientConnected = true;
+    throwIfAborted(globalSignal);
 
-    const bots = await get("/api/bots", token);
+    const bots = await get("/api/bots", token, globalSignal);
     const bot = bots.items.find((item) => item.bot_id === botId);
     const botConnected =
       connected && bot?.binding_status === "active" && bot?.connect_status === "connected";
@@ -161,6 +215,7 @@ async function main() {
       "/api/conversations/ensure",
       { target_type: "openclaw_bot", target_id: botId },
       token,
+      globalSignal,
     );
     if (openClawConversation.conversation?.target_type !== "openclaw_bot") {
       throw new Error(`openclaw bot conversation missing: ${safeJson(openClawConversation)}`);
@@ -171,6 +226,7 @@ async function main() {
       `/api/conversations/${conversationId}/messages`,
       { content: "p05 smoke hello", content_type: "text" },
       token,
+      globalSignal,
     );
     const responseMessages = sent.messages ?? [];
     const messageOk =
@@ -185,12 +241,16 @@ async function main() {
       throw new Error(`plugin reply missing from send response: ${safeJson(sent)}`);
     }
 
-    const history = await get(`/api/conversations/${conversationId}/messages`, token);
+    const history = await get(
+      `/api/conversations/${conversationId}/messages`,
+      token,
+      globalSignal,
+    );
     if (!history.items.some((item) => item.sender_type === "bot" && item.content === replyText)) {
       throw new Error(`plugin reply missing from history: ${safeJson(history)}`);
     }
 
-    const contacts = await get("/api/contacts", token);
+    const contacts = await get("/api/contacts", token, globalSignal);
     assertContact(contacts.ai, "default_bot", "system_default_bot", "contacts.ai");
     assertContact(contacts.ai, botId, "openclaw_bot", "contacts.ai");
     assertContact(contacts.all, "default_bot", "system_default_bot", "contacts.all");
@@ -215,26 +275,20 @@ async function main() {
       ),
     );
   } finally {
-    if (clientConnected) {
-      await client.disconnect();
+    if (clientConnected || connected) {
+      await client.disconnect().catch(() => {});
     }
   }
 }
 
-let globalTimer;
-await Promise.race([
-  main(),
-  new Promise((_, reject) => {
-    globalTimer = setTimeout(
-      () => reject(new Error(`e2e:p05 timed out after ${globalTimeoutMs}ms`)),
-      globalTimeoutMs,
-    );
-  }),
-])
-  .finally(() => {
-    clearTimeout(globalTimer);
-  })
-  .catch((error) => {
+const globalController = new AbortController();
+const globalTimer = setTimeout(() => globalController.abort(), globalTimeoutMs);
+
+try {
+  await main(globalController.signal);
+} catch (error) {
   console.error(error.stack ?? error.message);
-  process.exit(1);
-});
+  process.exitCode = 1;
+} finally {
+  clearTimeout(globalTimer);
+}

@@ -1,0 +1,54 @@
+name: Feature
+description: Propose an independently shippable product or engineering capability.
+title: "[REQ] "
+labels:
+  - feature
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are we solving and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome should this feature create?
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: What must the system do?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable checks that prove this feature is complete.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Linked docs
+      description: Link PRD, UX design, technical design, and implementation plan when available.
+      placeholder: |
+        PRD:
+        UX:
+        Technical design:
+        Implementation plan:
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and open questions
+      description: What is uncertain or risky?
+    validations:
+      required: false

@@ -130,6 +130,16 @@ OPENCLAW_AGENT_SMOKE=1 npm run e2e:openclaw:local
 
 `e2e:openclaw:local` 会先确认本机 OpenClaw Control 和 Gateway 可达，再执行同一条 OpenIM 默认 BOT 接入链路。
 
+## P0.5 Manual Acceptance
+
+- [ ] 通讯录“已添加的 AI” shows 默认 BOT and OpenClaw 员工助手.
+- [ ] 通讯录“全部联系人” shows 默认 BOT, OpenClaw 员工助手, and current employee.
+- [ ] Clicking a contact opens profile, not a conversation.
+- [ ] Clicking 发送消息 creates/opens the conversation.
+- [ ] Default BOT appears in 会话 only after opening/sending.
+- [ ] OpenClaw BOT status changes online/offline without refresh.
+- [ ] OpenClaw BOT remains usable after backend restart and Plugin reconnect.
+
 ## Documents
 
 - [总方案](docs/overall-plan.md)

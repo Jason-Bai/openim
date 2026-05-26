@@ -6,11 +6,18 @@ phase: idea
 
 github:
   issue: null
+  issues: []
   pr: null
+  prs: []
+  develop_pr: null
+  test_pr: null
+  main_pr: null
 
 branch:
   name: null
   worktree: null
+
+execution_items: []
 
 docs:
   prd: null
@@ -25,12 +32,19 @@ reviews:
   ux_review: not_required
   technical_review: pending
   code_review: pending
+  develop_review: pending
+  product_test: pending
+  release_review: pending
   qa_review: pending
 
 deployment:
   environment: null
   deployed_at: null
   smoke_test: null
+  tag: null
+  hotfix_backmerge:
+    develop: null
+    test: null
 
 timestamps:
   created_at: "YYYY-MM-DD"

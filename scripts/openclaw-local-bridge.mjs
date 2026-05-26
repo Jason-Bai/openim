@@ -94,7 +94,6 @@ async function main() {
     botId,
     token: payload.token,
     gatewayUrl,
-    autoReconnect: false,
     heartbeatIntervalMs: 1000,
   });
 

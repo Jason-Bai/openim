@@ -7,6 +7,7 @@ from app.core.errors import ApiError
 from app.core.security import create_client_message_id, create_message_id, now_utc
 from app.models.message import Message
 from app.models.user import User
+from app.models.bot import Bot, UserBotBinding
 from app.services.bot_gateway_sessions import bot_gateway_sessions
 from app.services.conversations import (
     ensure_conversation,
@@ -225,6 +226,17 @@ def _send_user(
 async def _send_openclaw_bot(
     db: Session, user: User, conversation, content: str
 ) -> list[Message]:
+    bot = db.scalar(select(Bot).where(Bot.bot_id == conversation.target_id))
+    binding = db.scalar(
+        select(UserBotBinding).where(
+            UserBotBinding.user_id == user.id,
+            UserBotBinding.bot_id == conversation.target_id,
+            UserBotBinding.status == "active",
+        )
+    )
+    if not bot or bot.connect_status != "connected" or not binding:
+        raise ApiError("BOT_NOT_CONNECTED", "OpenClaw 员工助手未连接，请先完成接入")
+
     user_message = _persist_message(
         db,
         conversation_id=conversation.id,

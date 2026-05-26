@@ -6,12 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
-from app.api import auth, bot_messages, bots, conversations, default_bot, friends, users
+from app.api import auth, bot_messages, bots, contacts, conversations, default_bot, friends, users
 from app.core.errors import ApiError, ERROR_SPECS
 from app.core.response import error_response, request_id_from
 from app.db.base import Base
 from app.db.runtime_schema import ensure_sqlite_runtime_schema
 from app.db.session import engine
+from app.services.bots import reset_runtime_bot_connections
 from app.ws import bot_gateway, employee
 
 
@@ -19,6 +20,7 @@ from app.ws import bot_gateway, employee
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(bind=engine)
     ensure_sqlite_runtime_schema(engine)
+    reset_runtime_bot_connections()
     yield
 
 
@@ -58,6 +60,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(auth.router)
+    app.include_router(contacts.router)
     app.include_router(users.router)
     app.include_router(conversations.router)
     app.include_router(bots.router)

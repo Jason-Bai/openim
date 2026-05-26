@@ -2,7 +2,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
-from app.core.security import create_conversation_id, create_message_id, now_utc
+from app.core.security import create_conversation_id, create_message_id, now_utc, utc_iso
 from app.models.bot import Bot, UserBotBinding
 from app.models.conversation import Conversation
 from app.models.friendship import Friendship
@@ -105,9 +105,7 @@ def serialize_conversation(db: Session, conversation: Conversation) -> dict[str,
         ),
         "last_message": last_message.content if last_message else None,
         "last_message_id": conversation.last_message_id,
-        "last_message_at": (
-            conversation.last_message_at.isoformat() if conversation.last_message_at else None
-        ),
+        "last_message_at": utc_iso(conversation.last_message_at),
         "online": _target_online(db, conversation),
     }
 
@@ -121,7 +119,7 @@ def serialize_message(message: Message) -> dict[str, object]:
         "content_type": message.content_type,
         "content": message.content,
         "status": message.status,
-        "created_at": message.created_at.isoformat(),
+        "created_at": utc_iso(message.created_at),
         "client_message_id": message.client_message_id,
     }
 

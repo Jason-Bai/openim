@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from app.db.runtime_schema import ensure_sqlite_runtime_schema
 from app.db.session import SessionLocal, engine
+from app.models.bot import Bot, UserBotBinding
 from app.models.friendship import Friendship
 from tests.conftest import auth_headers
 
@@ -64,6 +65,14 @@ def accept_friendship(requester_id: int, addressee_id: int) -> None:
                 status="accepted",
             )
         )
+        db.commit()
+
+
+def mark_bot_connected(user_id: int, bot_id: str) -> None:
+    with SessionLocal() as db:
+        model = db.query(Bot).filter(Bot.bot_id == bot_id).one()
+        model.connect_status = "connected"
+        db.add(UserBotBinding(user_id=user_id, bot_id=bot_id, binding_type=model.bot_type, status="active"))
         db.commit()
 
 
@@ -249,6 +258,41 @@ def test_bot_gateway_auth_handshake_and_heartbeat(client: TestClient) -> None:
     assert bots[0]["binding_status"] == "active"
 
 
+def test_startup_cleanup_resets_runtime_bot_connections(client: TestClient) -> None:
+    token = register_and_login(client)
+    connected_id = re.search(
+        r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]
+    ).group(1)
+    authenticating_id = re.search(
+        r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]
+    ).group(1)
+    pending_id = re.search(
+        r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]
+    ).group(1)
+
+    with SessionLocal() as db:
+        db.query(Bot).filter(Bot.bot_id == connected_id).one().connect_status = "connected"
+        db.query(Bot).filter(Bot.bot_id == authenticating_id).one().connect_status = "authenticating"
+        db.query(Bot).filter(Bot.bot_id == pending_id).one().connect_status = "pending"
+        db.commit()
+
+    from app.services.bots import reset_runtime_bot_connections
+
+    reset_runtime_bot_connections()
+
+    with SessionLocal() as db:
+        statuses = {
+            bot.bot_id: bot.connect_status
+            for bot in db.query(Bot).filter(Bot.bot_id.in_([connected_id, authenticating_id, pending_id]))
+        }
+
+    assert statuses == {
+        connected_id: "disconnected",
+        authenticating_id: "disconnected",
+        pending_id: "pending",
+    }
+
+
 def test_users_include_relationship_and_presence(client: TestClient) -> None:
     alice_token = register_and_login(client)
     response = client.post(
@@ -272,6 +316,30 @@ def test_users_include_relationship_and_presence(client: TestClient) -> None:
     assert other_item["relationship"] == "none"
     assert other_item["online"] is False
     assert other_item["last_seen_at"] is not None
+    assert self_item["last_seen_at"].endswith("Z")
+    assert other_item["last_seen_at"].endswith("Z")
+
+
+def test_contacts_include_users_default_bot_and_openclaw_bots(client: TestClient) -> None:
+    user_id, token = register_user(client, "zhangsan", "E001", "张三")
+    register_user(client, "lisi", "E002", "李四")
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    mark_bot_connected(user_id, bot_id)
+
+    response = client.get("/api/contacts", headers=auth_headers(token))
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert [item["contact_type"] for item in data["ai"]] == ["system_default_bot", "openclaw_bot"]
+    assert {item["contact_type"] for item in data["all"]} == {
+        "user",
+        "system_default_bot",
+        "openclaw_bot",
+    }
+    assert {item["id"] for item in data["all"]} >= {"default_bot", bot_id, str(user_id)}
+    openclaw = next(item for item in data["all"] if item["id"] == bot_id)
+    assert openclaw["online"] is True
+    assert openclaw["bot"]["binding_status"] == "active"
 
 
 def test_create_friend_request_updates_relationship(client: TestClient) -> None:
@@ -298,9 +366,10 @@ def test_create_friend_request_updates_relationship(client: TestClient) -> None:
 
 
 def test_bot_message_roundtrip_waits_for_connected_bot_reply(client: TestClient, monkeypatch) -> None:
-    token = register_and_login(client)
+    user_id, token = register_user(client, "zhangsan", "E001", "张三")
     bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
     command(client, token, f"/connect {bot_id}")
+    mark_bot_connected(user_id, bot_id)
     conversation = client.post(
         "/api/conversations/ensure",
         headers=auth_headers(token),
@@ -351,10 +420,8 @@ def test_openclaw_disconnected_returns_persisted_system_message(client: TestClie
         json={"content": "hello", "content_type": "text"},
     )
 
-    assert response.status_code == 200
-    messages = response.json()["data"]["messages"]
-    assert [item["sender_type"] for item in messages] == ["user", "system"]
-    assert messages[1]["content"] == "OpenClaw 员工助手暂时没有返回，请稍后重试。"
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "BOT_NOT_CONNECTED"
 
 
 def test_employee_message_creates_sender_and_receiver_copies(client: TestClient) -> None:

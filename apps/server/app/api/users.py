@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import current_user
 from app.core.response import ok, request_id_from
+from app.core.security import utc_iso
 from app.db.session import get_db
 from app.models.friendship import Friendship
 from app.models.user import User
@@ -32,7 +33,7 @@ def list_users(
                     "contact_type": "user",
                     "relationship": "self" if user.id == current.id else relationships.get(user.id, "none"),
                     "online": True if user.id == current.id else user.online,
-                    "last_seen_at": user.last_seen_at.isoformat() if user.last_seen_at else None,
+                    "last_seen_at": utc_iso(user.last_seen_at),
                 }
                 for user in users
             ]

@@ -2,7 +2,7 @@
 
 OpenIM 是一个用于接入 OpenClaw 员工助手的内部 IM 与 BOT Gateway 项目。
 
-当前 P0 已落地为可本地运行的最小闭环：员工注册登录后进入默认 BOT 会话，通过 `/new-bot` 创建 OpenClaw 员工助手接入槽位，通过 `/connect {bot_id}` 获取连接信息，外部助手或本地验证脚本使用 BOT Gateway 完成 auth、handshake、heartbeat 后建立员工账号到 OpenClaw 员工助手的绑定。
+当前 P0 已落地为可本地运行的最小闭环：员工注册登录后从通讯录或首屏引导打开默认 BOT，会话按需创建；随后通过 `/new-bot` 创建 OpenClaw 员工助手接入槽位，通过 `/connect {bot_id}` 获取连接信息，外部助手或本地验证脚本使用 BOT Gateway 完成 auth、handshake、heartbeat 后建立员工账号到 OpenClaw 员工助手的绑定。
 
 ## Project Naming
 
@@ -121,7 +121,7 @@ OPENCLAW_AGENT_SMOKE=1 npm run e2e:openclaw:local
 验证范围：
 
 ```text
-注册员工账号 -> 默认 BOT 会话 -> /new-bot -> /connect {bot_id}
+注册员工账号 -> 打开默认 BOT -> /new-bot -> /connect {bot_id}
 -> BOT Gateway auth -> handshake -> heartbeat
 -> binding_status=active 且 connect_status=connected
 ```

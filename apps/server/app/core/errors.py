@@ -18,6 +18,7 @@ ERROR_SPECS: dict[str, ErrorSpec] = {
     "BOT_NOT_OWNED": ErrorSpec(403),
     "BOT_REVOKED": ErrorSpec(403),
     "BOT_ALREADY_CONNECTED": ErrorSpec(409),
+    "BOT_NOT_CONNECTED": ErrorSpec(409, retryable=True),
     "TOKEN_INVALID": ErrorSpec(401),
     "TOKEN_REGENERATED": ErrorSpec(401),
     "HANDSHAKE_FAILED": ErrorSpec(400),

@@ -61,9 +61,13 @@ async function main() {
   const login = await post("/api/auth/login", { username, password });
   const token = login.access_token;
 
-  const conversations = await get("/api/conversations", token);
-  if (conversations.items?.[0]?.target_type !== "system_default_bot") {
-    throw new Error("default bot conversation missing");
+  const defaultConversation = await post(
+    "/api/conversations/ensure",
+    { target_type: "system_default_bot", target_id: "default_bot" },
+    token,
+  );
+  if (defaultConversation.conversation?.target_type !== "system_default_bot") {
+    throw new Error(`default bot conversation missing: ${JSON.stringify(defaultConversation)}`);
   }
 
   const newBot = await post("/api/default-bot/commands", { command: "/new-bot" }, token);

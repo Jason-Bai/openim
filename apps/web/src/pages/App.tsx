@@ -6,18 +6,18 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   BotItem,
+  ContactItem,
   Conversation,
   ConversationMessage,
   User,
   addFriend,
-  bots,
+  contacts,
   conversationMessages,
   conversations,
   ensureConversation,
   login,
   register,
   sendConversationMessage,
-  users
 } from "../api/openim";
 import { CopyableCodeBlock } from "../components/CopyableCodeBlock";
 import { useAuthStore } from "../state/authStore";
@@ -80,7 +80,10 @@ function LoginPage({ onAuthed }: { onAuthed: (token: string, user: User) => void
         <Segmented
           block
           value={mode}
-          onChange={(value) => setMode(value as "login" | "register")}
+          onChange={(value) => {
+            setError(null);
+            setMode(value as "login" | "register");
+          }}
           options={[
             { label: "登录", value: "login" },
             { label: "注册", value: "register" }
@@ -128,8 +131,7 @@ function ChatPage({
   const [inputValue, setInputValue] = useState("");
   const [optimistic, setOptimistic] = useState<Record<string, ConversationMessage[]>>({});
 
-  const contactsQuery = useQuery({ queryKey: ["users"], queryFn: () => users(token) });
-  const botsQuery = useQuery({ queryKey: ["bots"], queryFn: () => bots(token) });
+  const contactsQuery = useQuery({ queryKey: ["contacts"], queryFn: () => contacts(token) });
   const conversationsQuery = useQuery({
     queryKey: ["conversations"],
     queryFn: () => conversations(token)
@@ -137,12 +139,17 @@ function ChatPage({
 
   useEmployeeWebSocket(token, queryClient);
 
+  const selectedView = useMemo(
+    () => resolveSelectedView(selected, contactsQuery.data?.all ?? []),
+    [contactsQuery.data?.all, selected]
+  );
+
   const activeConversation = useMemo(
     () =>
-      selected.type === "conversation"
-        ? conversationsQuery.data?.items.find((item) => item.id === selected.conversationId)
+      selectedView.type === "conversation"
+        ? conversationsQuery.data?.items.find((item) => item.id === selectedView.conversationId)
         : undefined,
-    [conversationsQuery.data?.items, selected]
+    [conversationsQuery.data?.items, selectedView]
   );
   const messagesQuery = useQuery({
     queryKey: ["messages", activeConversation?.id],
@@ -172,10 +179,29 @@ function ChatPage({
   });
 
   const addFriendMutation = useMutation({
-    mutationFn: (userId: number) => addFriend(token, userId),
-    onSuccess: () => {
+    mutationFn: async (userId: number) => ({ userId, result: await addFriend(token, userId) }),
+    onSuccess: ({ userId, result }) => {
       message.success("好友申请已发送");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.setQueryData<{ items: User[] }>(["users"], (current) => ({
+        items: (current?.items ?? []).map((item) =>
+          item.id === userId ? { ...item, relationship: result.relationship } : item
+        )
+      }));
+      queryClient.setQueryData<{ ai: ContactItem[]; all: ContactItem[] }>(["contacts"], (current) =>
+        current ? updateContactUserRelationship(current, userId, result.relationship) : current
+      );
+      setSelected((current) =>
+        current.type === "profile" && current.target.type === "user" && current.target.user.id === userId
+          ? {
+              type: "profile",
+              target: {
+                type: "user",
+                user: { ...current.target.user, relationship: result.relationship }
+              }
+            }
+          : current
+      );
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (err) => {
       message.error(err instanceof ApiError ? err.message : "好友申请失败");
@@ -265,39 +291,45 @@ function ChatPage({
         {menu === "sessions" ? (
           <SessionsList
             items={conversationsQuery.data?.items ?? []}
-            selected={selected}
+            selected={selectedView}
             onSelect={(conversationId) => setSelected({ type: "conversation", conversationId })}
           />
         ) : (
           <ContactsPanel
-            users={contactsQuery.data?.items ?? []}
-            bots={botsQuery.data?.items ?? []}
-            selected={selected}
+            ai={contactsQuery.data?.ai ?? []}
+            all={contactsQuery.data?.all ?? []}
+            selected={selectedView}
             onSelect={(target) => setSelected({ type: "profile", target })}
           />
         )}
       </aside>
 
       <section className="chat">
-        {selected.type === "conversation" && activeConversation ? (
+        {selectedView.type === "conversation" && activeConversation ? (
           <ConversationChat
             conversation={activeConversation}
             messages={visibleMessages}
             value={inputValue}
             loading={sendMutation.isPending}
+            disabled={activeConversation.target_type === "openclaw_bot" && !activeConversation.online}
+            disabledReason="OpenClaw 员工助手未连接，请先完成接入"
             onValueChange={setInputValue}
             onSubmit={submitMessage}
           />
-        ) : selected.type === "profile" ? (
+        ) : selectedView.type === "profile" ? (
           <TargetProfile
-            target={selected.target}
+            target={selectedView.target}
             adding={addFriendMutation.isPending}
             opening={ensureMutation.isPending}
             onAddFriend={(userId) => addFriendMutation.mutate(userId)}
-            onOpenSession={() => ensureMutation.mutate(selected.target)}
+            onOpenSession={() => ensureMutation.mutate(selectedView.target)}
           />
         ) : (
-          <GuidePanel menu={menu} />
+          <GuidePanel
+            menu={menu}
+            onOpenDefaultBot={() => ensureMutation.mutate({ type: "system_default_bot", id: "default_bot" })}
+            opening={ensureMutation.isPending}
+          />
         )}
       </section>
     </main>
@@ -343,13 +375,13 @@ function SessionsList({
 }
 
 function ContactsPanel({
-  users,
-  bots,
+  ai,
+  all,
   selected,
   onSelect
 }: {
-  users: User[];
-  bots: BotItem[];
+  ai: ContactItem[];
+  all: ContactItem[];
   selected: SelectedView;
   onSelect: (target: ProfileTarget) => void;
 }) {
@@ -359,29 +391,16 @@ function ContactsPanel({
       <Typography.Text type="secondary">已添加的 AI</Typography.Text>
       <List
         size="small"
-        dataSource={[
-          { type: "system_default_bot" as const, id: "default_bot", name: "默认 BOT", online: true },
-          ...bots.map((bot) => ({
-            type: "openclaw_bot" as const,
-            id: bot.bot_id,
-            name: bot.name,
-            online: bot.connect_status === "connected",
-            bot
-          }))
-        ]}
+        dataSource={ai}
         renderItem={(item) => (
           <List.Item
-            className={`contactItem ${isAiSelected(item, activeProfile) ? "selected" : ""}`}
-            onClick={() =>
-              item.type === "system_default_bot"
-                ? onSelect({ type: "system_default_bot", id: "default_bot" })
-                : onSelect({ type: "openclaw_bot", bot: item.bot })
-            }
+            className={`contactItem ${isContactSelected(item, activeProfile) ? "selected" : ""}`}
+            onClick={() => onSelect(profileTargetFromContact(item))}
           >
             <ContactLine
               icon="bot"
-              title={item.name}
-              subtitle={item.type === "system_default_bot" ? "系统助手" : item.id}
+              title={item.title}
+              subtitle={item.subtitle}
               online={item.online}
             />
           </List.Item>
@@ -391,18 +410,16 @@ function ContactsPanel({
       <Typography.Text type="secondary">全部联系人</Typography.Text>
       <List
         size="small"
-        dataSource={users}
+        dataSource={all}
         renderItem={(item) => (
           <List.Item
-            className={`contactItem ${
-              activeProfile?.type === "user" && activeProfile.user.id === item.id ? "selected" : ""
-            }`}
-            onClick={() => onSelect({ type: "user", user: item })}
+            className={`contactItem ${isContactSelected(item, activeProfile) ? "selected" : ""}`}
+            onClick={() => onSelect(profileTargetFromContact(item))}
           >
             <ContactLine
-              icon="user"
-              title={item.real_name}
-              subtitle={item.online ? item.username : leaveText(item.last_seen_at)}
+              icon={item.contact_type === "user" ? "user" : "bot"}
+              title={item.title}
+              subtitle={contactSubtitle(item)}
               online={item.online}
             />
           </List.Item>
@@ -464,12 +481,14 @@ function TargetProfile({
     );
   }
   if (target.type === "openclaw_bot") {
+    const canMessage = target.bot.connect_status === "connected" && target.bot.binding_status === "active";
     return (
       <ProfileShell title={target.bot.name} subtitle={target.bot.bot_id}>
         <ProfileRow label="类型" value="公司 OpenClaw 员工助手" />
         <ProfileRow label="状态" value={target.bot.connect_status === "connected" ? "在线" : "离线"} />
         <ProfileRow label="绑定" value={target.bot.binding_status === "active" ? "已绑定" : "未绑定"} />
-        <Button type="primary" loading={opening} onClick={onOpenSession}>
+        {!canMessage && <Typography.Text type="secondary">请先通过默认 BOT 获取连接信息并启动 OpenClaw 接入。</Typography.Text>}
+        <Button type="primary" loading={opening} disabled={!canMessage} onClick={onOpenSession}>
           发送消息
         </Button>
       </ProfileShell>
@@ -503,6 +522,8 @@ function ConversationChat({
   messages,
   value,
   loading,
+  disabled,
+  disabledReason,
   onValueChange,
   onSubmit
 }: {
@@ -510,9 +531,13 @@ function ConversationChat({
   messages: ConversationMessage[];
   value: string;
   loading: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
   onValueChange: (value: string) => void;
   onSubmit: (value: string) => void;
 }) {
+  const quickCommands =
+    conversation.target_type === "system_default_bot" ? ["/help", "/new-bot", "/my-bots"] : [];
   return (
     <>
       <header className="chatHeader">
@@ -532,20 +557,38 @@ function ConversationChat({
           </div>
         ))}
       </div>
+      {disabled && disabledReason && <div className="chatNotice">{disabledReason}</div>}
+      {quickCommands.length > 0 && (
+        <div className="quickCommands">
+          {quickCommands.map((command) => (
+            <Button key={command} size="small" onClick={() => onSubmit(command)} disabled={loading}>
+              {command}
+            </Button>
+          ))}
+        </div>
+      )}
       <form
         className="commandBar"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!value.trim()) return;
+          if (disabled || !value.trim()) return;
           onSubmit(value);
         }}
       >
         <Input
           value={value}
           onChange={(event) => onValueChange(event.target.value)}
+          disabled={disabled}
           placeholder={`给 ${conversation.title} 发送消息`}
         />
-        <Button htmlType="submit" type="primary" icon={<Send size={16} />} loading={loading} />
+        <Button
+          aria-label="发送消息"
+          htmlType="submit"
+          type="primary"
+          icon={<Send size={16} />}
+          loading={loading}
+          disabled={disabled || !value.trim()}
+        />
       </form>
     </>
   );
@@ -570,13 +613,30 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function GuidePanel({ menu }: { menu: MenuKey }) {
+function GuidePanel({
+  menu,
+  opening,
+  onOpenDefaultBot
+}: {
+  menu: MenuKey;
+  opening: boolean;
+  onOpenDefaultBot: () => void;
+}) {
   return (
     <div className="guidePanel">
-      <Typography.Title level={3}>{menu === "sessions" ? "暂无会话" : "选择联系人或 AI"}</Typography.Title>
+      <Typography.Title level={3}>
+        {menu === "sessions" ? "开始接入 OpenClaw 员工助手" : "选择联系人或 AI"}
+      </Typography.Title>
       <Typography.Text type="secondary">
-        {menu === "sessions" ? "去通讯录选择一个联系人、AI 或群组开始。" : "从左侧选择一个对象，查看资料并开始操作。"}
+        {menu === "sessions" ? "通过默认 BOT 创建接入槽位并获取连接信息。" : "从左侧选择一个对象，查看资料并开始操作。"}
       </Typography.Text>
+      {menu === "sessions" && (
+        <div className="guideActions">
+          <Button type="primary" loading={opening} onClick={onOpenDefaultBot}>
+            打开默认 BOT
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -621,6 +681,26 @@ function targetIdOf(target: ProfileTarget) {
   return String(target.user.id);
 }
 
+function resolveSelectedView(selected: SelectedView, contacts: ContactItem[]): SelectedView {
+  if (selected.type !== "profile") return selected;
+  const target = selected.target;
+  if (target.type === "user") {
+    const contact = contacts.find((item) => item.contact_type === "user" && item.user.id === target.user.id);
+    return contact && contact.contact_type === "user"
+      ? { type: "profile", target: { type: "user", user: contact.user } }
+      : selected;
+  }
+  if (target.type === "openclaw_bot") {
+    const contact = contacts.find(
+      (item) => item.contact_type === "openclaw_bot" && item.bot.bot_id === target.bot.bot_id
+    );
+    return contact && contact.contact_type === "openclaw_bot"
+      ? { type: "profile", target: { type: "openclaw_bot", bot: contact.bot } }
+      : selected;
+  }
+  return selected;
+}
+
 function upsertConversationCache(queryClient: ReturnType<typeof useQueryClient>, conversation: Conversation) {
   queryClient.setQueryData<{ items: Conversation[] }>(["conversations"], (current) => ({
     items: [conversation, ...(current?.items ?? []).filter((item) => item.id !== conversation.id)]
@@ -655,13 +735,40 @@ function removeOptimistic(
   };
 }
 
-function isAiSelected(
-  item: { type: "system_default_bot"; id: string } | { type: "openclaw_bot"; id: string },
-  selected?: ProfileTarget
-) {
+function profileTargetFromContact(item: ContactItem): ProfileTarget {
+  if (item.contact_type === "system_default_bot") return { type: "system_default_bot", id: "default_bot" };
+  if (item.contact_type === "openclaw_bot") return { type: "openclaw_bot", bot: item.bot };
+  return { type: "user", user: item.user };
+}
+
+function isContactSelected(item: ContactItem, selected?: ProfileTarget) {
   if (!selected) return false;
-  if (item.type === "system_default_bot") return selected.type === "system_default_bot";
-  return selected.type === "openclaw_bot" && selected.bot.bot_id === item.id;
+  if (item.contact_type === "system_default_bot") return selected.type === "system_default_bot";
+  if (item.contact_type === "openclaw_bot") {
+    return selected.type === "openclaw_bot" && selected.bot.bot_id === item.bot.bot_id;
+  }
+  return selected.type === "user" && selected.user.id === item.user.id;
+}
+
+function contactSubtitle(item: ContactItem) {
+  if (item.contact_type !== "user") return item.subtitle;
+  if (item.online) return item.user.username;
+  return leaveText(item.user.last_seen_at);
+}
+
+function updateContactUserRelationship(
+  current: { ai: ContactItem[]; all: ContactItem[] },
+  userId: number,
+  relationship: User["relationship"]
+) {
+  return {
+    ...current,
+    all: current.all.map((item) =>
+      item.contact_type === "user" && item.user.id === userId
+        ? { ...item, user: { ...item.user, relationship } }
+        : item
+    )
+  };
 }
 
 function relationshipText(value: User["relationship"]) {

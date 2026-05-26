@@ -21,6 +21,31 @@ export type BotItem = {
   first_connected_at: string | null;
 };
 
+export type ContactItem =
+  | {
+      id: "default_bot";
+      contact_type: "system_default_bot";
+      title: string;
+      subtitle: string;
+      online: boolean;
+    }
+  | {
+      id: string;
+      contact_type: "openclaw_bot";
+      title: string;
+      subtitle: string;
+      online: boolean;
+      bot: BotItem;
+    }
+  | {
+      id: string;
+      contact_type: "user";
+      title: string;
+      subtitle: string;
+      online: boolean;
+      user: User;
+    };
+
 export type Conversation = {
   id: string;
   conversation_type: string;
@@ -75,6 +100,10 @@ export function me(token: string) {
 
 export function users(token: string) {
   return api<{ items: User[] }>("/users", {}, token);
+}
+
+export function contacts(token: string) {
+  return api<{ ai: ContactItem[]; all: ContactItem[] }>("/contacts", {}, token);
 }
 
 export function addFriend(token: string, userId: number) {

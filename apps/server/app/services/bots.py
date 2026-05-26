@@ -1,6 +1,7 @@
 import json
 
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -12,9 +13,11 @@ from app.core.security import (
     mask_token,
     now_utc,
     token_last4,
+    utc_iso,
     verify_secret,
 )
 from app.models.bot import Bot, BotConnectionLog, UserBotBinding
+from app.db.session import SessionLocal
 
 
 def get_owned_bot(db: Session, user_id: int, bot_id: str) -> Bot:
@@ -62,13 +65,21 @@ def list_user_bots(db: Session, user_id: int) -> list[dict[str, object]]:
                 "bot_type": bot.bot_type,
                 "connect_status": bot.connect_status,
                 "binding_status": binding.status if binding else "none",
-                "last_seen_at": bot.last_seen_at.isoformat() if bot.last_seen_at else None,
-                "first_connected_at": (
-                    bot.first_connected_at.isoformat() if bot.first_connected_at else None
-                ),
+                "last_seen_at": utc_iso(bot.last_seen_at),
+                "first_connected_at": utc_iso(bot.first_connected_at),
             }
         )
     return result
+
+
+def reset_runtime_bot_connections() -> None:
+    with SessionLocal() as db:
+        db.execute(
+            update(Bot)
+            .where(Bot.connect_status.in_(["connected", "authenticating"]))
+            .values(connect_status="disconnected", updated_at=now_utc())
+        )
+        db.commit()
 
 
 def connect_info(db: Session, user_id: int, bot_id: str) -> tuple[dict[str, object], bool]:

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user
 from app.core.errors import ApiError
 from app.core.response import ok, request_id_from
-from app.core.security import create_access_token, hash_secret, now_utc, verify_secret
+from app.core.security import create_access_token, hash_secret, now_utc, utc_iso, verify_secret
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import LoginRequest, RegisterRequest
@@ -22,7 +22,7 @@ def user_data(user: User) -> dict[str, object]:
         "employee_id": user.employee_id,
         "real_name": user.real_name,
         "online": user.online,
-        "last_seen_at": user.last_seen_at.isoformat() if user.last_seen_at else None,
+        "last_seen_at": utc_iso(user.last_seen_at),
     }
 
 

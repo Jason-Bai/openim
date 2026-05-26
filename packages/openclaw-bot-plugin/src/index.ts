@@ -304,7 +304,13 @@ export class OpenClawBotClient {
     this.reconnectAttempt += 1;
     const baseDelay = Math.min(30_000, 1000 * 2 ** (this.reconnectAttempt - 1));
     const jitter = Math.floor(Math.random() * 250);
-    setTimeout(() => void this.openSocket(), baseDelay + jitter);
+    setTimeout(() => {
+      void this.openSocket().catch((error) => {
+        this.options.logger?.warn?.("Reconnect attempt failed", {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+    }, baseDelay + jitter);
   }
 
   private closeReason(code: number, reason: string): DisconnectReason {

@@ -188,6 +188,11 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
+  gap: 12px;
+}
+
+.guideActions {
+  margin-top: 8px;
 }
 
 .profilePanel {
@@ -288,12 +293,52 @@ body {
   gap: 12px;
 }
 
+.chatNotice,
+.quickCommands {
+  background: #fff;
+  border-top: 1px solid #e5e9f2;
+  padding: 10px 24px;
+}
+
+.chatNotice {
+  color: #7b8798;
+  font-size: 13px;
+}
+
+.quickCommands {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 860px) {
   .shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
   }
-  .mainMenu,
+  .mainMenu {
+    min-height: auto;
+    padding: 10px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .menuSpacer {
+    flex: 1;
+  }
+  .accountFooter {
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 0;
+    padding-left: 10px;
+    max-width: 180px;
+  }
   .contacts {
-    display: none;
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid #e5e9f2;
+  }
+  .guidePanel,
+  .profilePanel {
+    padding: 24px;
   }
 }

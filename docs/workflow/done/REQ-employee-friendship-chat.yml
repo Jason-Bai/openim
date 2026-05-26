@@ -1,8 +1,8 @@
 id: REQ-employee-friendship-chat
 title: Employee friendship approval and direct chat completion
 type: feature
-status: active
-phase: code_review
+status: done
+phase: done
 
 github:
   issue: https://github.com/Jason-Bai/openim/issues/9
@@ -23,34 +23,34 @@ execution_items:
     pr: https://github.com/Jason-Bai/openim/pull/11
     branch: feature/9-accept-friend-request
     worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-9-accept-friend-request
-    phase: code_review
-    status: active
+    phase: done
+    status: done
   - issue: https://github.com/Jason-Bai/openim/issues/10
     pr: https://github.com/Jason-Bai/openim/pull/12
     branch: feature/10-reject-friend-request
     worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-10-reject-friend-request
-    phase: code_review
-    status: active
+    phase: done
+    status: done
 
 docs:
   prd: docs/product/requirements/REQ-employee-friendship-chat.md
   ux: null
   technical_design: docs/engineering/REQ-employee-friendship-chat-technical-design.md
   implementation_plan: docs/engineering/plans/REQ-employee-friendship-chat-implementation-plan.md
-  test_report: null
+  test_report: docs/tests/REQ-employee-friendship-chat-test-report.md
   release_note: null
 
 reviews:
   product_review: approved
   ux_review: not_required
   technical_review: approved
-  code_review: pending
-  qa_review: pending
+  code_review: approved
+  qa_review: approved
 
 deployment:
-  environment: null
-  deployed_at: null
-  smoke_test: null
+  environment: main
+  deployed_at: "2026-05-26"
+  smoke_test: docs/tests/REQ-employee-friendship-chat-test-report.md
 
 timestamps:
   created_at: "2026-05-26"
@@ -59,7 +59,7 @@ timestamps:
 blockers: []
 dependencies: []
 notes:
-  - GitHub execution Issues will be created only after PRD, technical design, implementation plan review, and user confirmation.
-  - Issue split should use independent minimal feature slices rather than default frontend/backend layers.
-  - Implementation plan passed agent plan review and user confirmation.
-  - Pull requests are draft while code review and PR sequencing are in progress.
+  - GitHub execution Issues were created only after PRD, technical design, implementation plan review, and user confirmation.
+  - Issue split used independent minimal feature slices rather than frontend/backend layers.
+  - PR #12 was rebased on PR #11 before merge so the final UI supports both Accept and Reject actions.
+  - No external deployment target is configured; merged main is treated as the release baseline for this prototype.

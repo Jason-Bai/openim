@@ -1,6 +1,6 @@
 # Employee Friendship Approval And Direct Chat PRD
 
-Status: draft for requirement review
+Status: PRD approved; technical design in review
 
 Registry: `docs/workflow/active/REQ-employee-friendship-chat.yml`
 

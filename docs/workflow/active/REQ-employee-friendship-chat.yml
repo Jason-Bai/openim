@@ -2,7 +2,7 @@ id: REQ-employee-friendship-chat
 title: Employee friendship approval and direct chat completion
 type: feature
 status: active
-phase: technical_review
+phase: planned
 
 github:
   issue: null
@@ -39,6 +39,6 @@ timestamps:
 blockers: []
 dependencies: []
 notes:
-  - GitHub execution Issues will be created only after PRD and technical design approval.
+  - GitHub execution Issues will be created only after PRD, technical design, implementation plan review, and user confirmation.
   - Issue split should use independent minimal feature slices rather than default frontend/backend layers.
-  - Implementation plan passed agent plan review and is awaiting user confirmation before execution Issues are created.
+  - Implementation plan passed agent plan review and user confirmation.

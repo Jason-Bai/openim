@@ -404,6 +404,59 @@ def test_bot_gateway_auth_only_disconnect_marks_bot_disconnected(client: TestCli
     assert status == "disconnected"
 
 
+def test_bot_gateway_stale_auth_only_close_does_not_disconnect_live_session(
+    client: TestClient,
+) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    connect_payload = json.loads(command(client, token, f"/connect {bot_id}")["content"])
+
+    with client.websocket_connect(f"/ws?token={token}") as employee_websocket:
+        with client.websocket_connect("/bot-gateway/ws") as stale_websocket:
+            stale_websocket.send_json(
+                {
+                    "type": "auth",
+                    "request_id": "req_stale_auth",
+                    "protocol_version": "bot-v1",
+                    "bot_id": bot_id,
+                    "token": connect_payload["token"],
+                }
+            )
+            assert stale_websocket.receive_json()["ok"] is True
+
+            with client.websocket_connect("/bot-gateway/ws") as live_websocket:
+                live_websocket.send_json(
+                    {
+                        "type": "auth",
+                        "request_id": "req_live_auth",
+                        "protocol_version": "bot-v1",
+                        "bot_id": bot_id,
+                        "token": connect_payload["token"],
+                    }
+                )
+                assert live_websocket.receive_json()["ok"] is True
+                live_websocket.send_json(
+                    {
+                        "type": "handshake",
+                        "request_id": "req_live_handshake",
+                        "protocol_version": "bot-v1",
+                        "bot_id": bot_id,
+                        "runtime": {"name": "test", "version": "0.1.0"},
+                    }
+                )
+                assert live_websocket.receive_json()["type"] == "handshake.result"
+                assert receive_json_with_timeout(employee_websocket)["bot"]["connect_status"] == "connected"
+
+                stale_websocket.close()
+                event = maybe_receive_json_with_timeout(employee_websocket)
+
+                with SessionLocal() as db:
+                    status = db.query(Bot).filter(Bot.bot_id == bot_id).one().connect_status
+
+                assert event is None
+                assert status == "connected"
+
+
 def test_bot_gateway_does_not_disconnect_when_closing_socket_is_not_current(
     client: TestClient,
 ) -> None:

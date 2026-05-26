@@ -32,6 +32,9 @@ class BotGatewaySessionRegistry:
             return True
         return False
 
+    def has_current(self, bot_id: str) -> bool:
+        return bot_id in self._sessions
+
     async def request_reply(
         self,
         *,

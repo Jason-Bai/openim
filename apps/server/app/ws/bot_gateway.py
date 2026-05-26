@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from sqlalchemy import update
 
 from app.core.config import settings
 from app.core.errors import ApiError
@@ -146,8 +147,12 @@ async def bot_gateway(websocket: WebSocket) -> None:
                     )
                 except Exception:
                     pass
-            elif not registered and bot.connect_status == "authenticating":
-                bot.connect_status = "disconnected"
+            elif not registered and not bot_gateway_sessions.has_current(bot.bot_id):
+                db.execute(
+                    update(Bot)
+                    .where(Bot.bot_id == bot.bot_id, Bot.connect_status == "authenticating")
+                    .values(connect_status="disconnected")
+                )
                 db.commit()
         db.close()
 

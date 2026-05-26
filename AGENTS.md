@@ -73,34 +73,41 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. Project Context
 
-This repository is `openim`: an IM prototype for employee accounts, default BOT onboarding, OpenClaw employee-assistant BOT integration, and employee-to-employee chat.
+Project overview, module layout, local runbook, and document index live in [README.md](README.md). Treat README as the source of truth for project facts and update it instead of duplicating project information here.
 
-Architecture reference: [docs/architecture.md](docs/architecture.md).
+Use [README.md](README.md), `package.json`, and package-level manifests for current local run and verification commands.
 
-Primary modules:
+## 6. Product Workflow
 
-- `apps/server`: FastAPI backend. Owns auth, users, friendships, bots, conversations, messages, employee WebSocket, and BOT Gateway.
-- `apps/web`: React + Vite frontend. Owns contacts, conversations, profiles, and chat UI.
-- `packages/openclaw-bot-plugin`: npm package for external/OpenClaw BOTs to connect to OpenIM.
-- `scripts/openclaw-local-bridge.mjs`: local bridge from an OpenIM BOT slot to the local OpenClaw agent.
-- `docs`: product, backend, frontend, plugin, task, and architecture plans.
+Workflow reference: [docs/workflow.md](docs/workflow.md).
 
-Current P0 rule:
+Default branch policy:
 
-- Default BOT, OpenClaw employee-assistant BOT, and human employee chat should use the unified `conversations/messages` model.
-- Conversation lists and message history must be backend-backed so refresh does not lose state.
-- Local-only UI state is acceptable only for short-lived optimistic sending.
+- Do not develop directly on `main`.
+- Use one GitHub Issue per independently shippable feature, bug, or documentation workflow change.
+- Use one dedicated branch and worktree per Issue.
+- Keep `main` as the stable integration baseline.
 
-Development defaults:
+Issue usage:
 
-- Backend: `http://127.0.0.1:8080`
-- Frontend: `http://127.0.0.1:5173`
-- Dev DB: `apps/server/openim.db`
-- Plugin package: `@openim/openclaw-bot-plugin`
+- Epic Issues track product stages or large initiatives.
+- Feature Issues track independently shippable requirements.
+- Bug Issues track incorrect existing behavior with reproduction and verification.
+- Issues coordinate status and discussion; durable PRD, UX, technical design, implementation plan, and release notes live in `docs/`.
 
-Common verification:
+Branch naming:
 
-- Backend tests: `cd apps/server && uv run pytest -q`
-- Backend lint: `cd apps/server && uv run ruff check .`
-- Frontend type check: `npm run test -w apps/web`
-- Frontend build: `npm run build -w apps/web`
+- `feature/<issue-number>-short-name`
+- `fix/<issue-number>-short-name`
+- `docs/<issue-number>-short-name`
+- `chore/<issue-number>-short-name`
+
+Required gates for non-trivial work:
+
+1. Confirm or create the GitHub Issue.
+2. Clarify product requirements and acceptance criteria.
+3. Write or update PRD/UX docs when the change affects product behavior or UI.
+4. Write or update technical design and implementation plan before coding.
+5. Implement only the approved scope in the dedicated branch/worktree.
+6. Run relevant verification commands.
+7. Open a PR with linked Issue, docs, verification evidence, risks, and rollback notes.

@@ -1,0 +1,43 @@
+name: Epic
+description: Track a product stage or large initiative.
+title: "[EPIC] "
+labels:
+  - epic
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What product or engineering outcome should this epic achieve?
+      placeholder: "Example: P1 enables employees to chat with their OpenClaw employee assistant through backend-backed conversations/messages."
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included?
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What is explicitly excluded?
+    validations:
+      required: true
+  - type: textarea
+    id: child_issues
+    attributes:
+      label: Child issues
+      description: Link Feature/Bug Issues that belong to this epic.
+      placeholder: "- #123"
+    validations:
+      required: false
+  - type: textarea
+    id: release_criteria
+    attributes:
+      label: Release criteria
+      description: What must be true before this epic is considered complete?
+    validations:
+      required: true

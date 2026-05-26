@@ -25,6 +25,7 @@ async def bot_gateway(websocket: WebSocket) -> None:
     await websocket.accept()
     db = SessionLocal()
     bot: Bot | None = None
+    registered = False
     try:
         auth_message = await asyncio.wait_for(
             websocket.receive_json(), timeout=settings.auth_timeout_seconds
@@ -60,6 +61,7 @@ async def bot_gateway(websocket: WebSocket) -> None:
                 )
                 db.commit()
                 bot_gateway_sessions.register(bot.bot_id, websocket)
+                registered = True
                 await employee_ws_sessions.send_to_user(
                     bot.owner_user_id,
                     {
@@ -131,7 +133,7 @@ async def bot_gateway(websocket: WebSocket) -> None:
         pass
     finally:
         if bot is not None:
-            if bot_gateway_sessions.unregister(bot.bot_id, websocket):
+            if registered and bot_gateway_sessions.unregister(bot.bot_id, websocket):
                 bot.connect_status = "disconnected"
                 db.commit()
                 try:
@@ -144,6 +146,9 @@ async def bot_gateway(websocket: WebSocket) -> None:
                     )
                 except Exception:
                     pass
+            elif not registered and bot.connect_status == "authenticating":
+                bot.connect_status = "disconnected"
+                db.commit()
         db.close()
 
 

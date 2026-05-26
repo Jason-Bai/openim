@@ -25,7 +25,10 @@ class EmployeeWebSocketSessions:
     async def send_to_user(self, user_id: int, payload: dict[str, object]) -> None:
         sockets = list(self._sessions.get(user_id, set()))
         for websocket in sockets:
-            await websocket.send_json(payload)
+            try:
+                await websocket.send_json(payload)
+            except Exception:
+                self.unregister(user_id, websocket)
 
 
 employee_ws_sessions = EmployeeWebSocketSessions()

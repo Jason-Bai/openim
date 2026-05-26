@@ -49,27 +49,26 @@ def create_bot_slot(db: Session, user_id: int, name: str | None = None) -> Bot:
 
 def list_user_bots(db: Session, user_id: int) -> list[dict[str, object]]:
     bots = db.scalars(select(Bot).where(Bot.owner_user_id == user_id).order_by(Bot.created_at.asc()))
-    result: list[dict[str, object]] = []
-    for bot in bots:
-        binding = db.scalar(
-            select(UserBotBinding).where(
-                UserBotBinding.user_id == user_id,
-                UserBotBinding.bot_id == bot.bot_id,
-                UserBotBinding.status == "active",
-            )
+    return [serialize_bot_for_owner(db, bot) for bot in bots]
+
+
+def serialize_bot_for_owner(db: Session, bot: Bot) -> dict[str, object]:
+    binding = db.scalar(
+        select(UserBotBinding).where(
+            UserBotBinding.user_id == bot.owner_user_id,
+            UserBotBinding.bot_id == bot.bot_id,
+            UserBotBinding.status == "active",
         )
-        result.append(
-            {
-                "bot_id": bot.bot_id,
-                "name": bot.name,
-                "bot_type": bot.bot_type,
-                "connect_status": bot.connect_status,
-                "binding_status": binding.status if binding else "none",
-                "last_seen_at": utc_iso(bot.last_seen_at),
-                "first_connected_at": utc_iso(bot.first_connected_at),
-            }
-        )
-    return result
+    )
+    return {
+        "bot_id": bot.bot_id,
+        "name": bot.name,
+        "bot_type": bot.bot_type,
+        "connect_status": bot.connect_status,
+        "binding_status": binding.status if binding else "none",
+        "last_seen_at": utc_iso(bot.last_seen_at),
+        "first_connected_at": utc_iso(bot.first_connected_at),
+    }
 
 
 def reset_runtime_bot_connections() -> None:

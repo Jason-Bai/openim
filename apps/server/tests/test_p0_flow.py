@@ -1,5 +1,7 @@
 import json
+import queue
 import re
+import threading
 
 from fastapi.testclient import TestClient
 from sqlalchemy import text
@@ -66,6 +68,25 @@ def accept_friendship(requester_id: int, addressee_id: int) -> None:
             )
         )
         db.commit()
+
+
+def receive_json_with_timeout(websocket, timeout: float = 1.0) -> dict:
+    result: queue.Queue[dict | BaseException] = queue.Queue(maxsize=1)
+
+    def receive() -> None:
+        try:
+            result.put(websocket.receive_json())
+        except BaseException as exc:
+            result.put(exc)
+
+    threading.Thread(target=receive, daemon=True).start()
+    try:
+        item = result.get(timeout=timeout)
+    except queue.Empty as exc:
+        raise AssertionError("timed out waiting for websocket event") from exc
+    if isinstance(item, BaseException):
+        raise item
+    return item
 
 
 def mark_bot_connected(user_id: int, bot_id: str) -> None:
@@ -256,6 +277,83 @@ def test_bot_gateway_auth_handshake_and_heartbeat(client: TestClient) -> None:
 
     bots = client.get("/api/bots", headers=auth_headers(token)).json()["data"]["items"]
     assert bots[0]["binding_status"] == "active"
+
+
+def test_bot_gateway_pushes_status_changed_to_owner(client: TestClient) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    connect_payload = json.loads(command(client, token, f"/connect {bot_id}")["content"])
+
+    with client.websocket_connect(f"/ws?token={token}") as employee_websocket:
+        with client.websocket_connect("/bot-gateway/ws") as bot_websocket:
+            bot_websocket.send_json(
+                {
+                    "type": "auth",
+                    "request_id": "req_auth",
+                    "protocol_version": "bot-v1",
+                    "bot_id": bot_id,
+                    "token": connect_payload["token"],
+                }
+            )
+            assert bot_websocket.receive_json()["ok"] is True
+            bot_websocket.send_json(
+                {
+                    "type": "handshake",
+                    "request_id": "req_handshake",
+                    "protocol_version": "bot-v1",
+                    "bot_id": bot_id,
+                    "runtime": {"name": "test", "version": "0.1.0"},
+                }
+            )
+            assert bot_websocket.receive_json()["type"] == "handshake.result"
+
+            event = receive_json_with_timeout(employee_websocket)
+
+    assert event == {
+        "type": "bot.status_changed",
+        "bot": {
+            "bot_id": bot_id,
+            "connect_status": "connected",
+            "binding_status": "active",
+        },
+    }
+
+
+def test_bot_gateway_pushes_disconnected_on_socket_close(client: TestClient) -> None:
+    token = register_and_login(client)
+    bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)
+    connect_payload = json.loads(command(client, token, f"/connect {bot_id}")["content"])
+
+    with client.websocket_connect(f"/ws?token={token}") as employee_websocket:
+        with client.websocket_connect("/bot-gateway/ws") as bot_websocket:
+            bot_websocket.send_json(
+                {
+                    "type": "auth",
+                    "request_id": "req_auth",
+                    "protocol_version": "bot-v1",
+                    "bot_id": bot_id,
+                    "token": connect_payload["token"],
+                }
+            )
+            assert bot_websocket.receive_json()["ok"] is True
+            bot_websocket.send_json(
+                {
+                    "type": "handshake",
+                    "request_id": "req_handshake",
+                    "protocol_version": "bot-v1",
+                    "bot_id": bot_id,
+                    "runtime": {"name": "test", "version": "0.1.0"},
+                }
+            )
+            assert bot_websocket.receive_json()["type"] == "handshake.result"
+            assert receive_json_with_timeout(employee_websocket)["bot"]["connect_status"] == "connected"
+
+        event = receive_json_with_timeout(employee_websocket)
+
+    assert event["type"] == "bot.status_changed"
+    assert event["bot"]["bot_id"] == bot_id
+    assert event["bot"]["connect_status"] == "disconnected"
+    assert event["bot"]["binding_status"] == "active"
 
 
 def test_startup_cleanup_resets_runtime_bot_connections(client: TestClient) -> None:

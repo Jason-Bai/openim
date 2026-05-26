@@ -739,6 +739,99 @@ def test_create_friend_request_updates_relationship(client: TestClient) -> None:
     assert bob_item["relationship"] == "pending_out"
 
 
+def test_accept_incoming_friend_request_updates_relationships(client: TestClient) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+
+    response = client.post(f"/api/friends/{alice_id}/accept", headers=auth_headers(bob_token))
+
+    assert response.status_code == 200
+    assert response.json()["data"]["relationship"] == "friend"
+
+    alice_users = client.get("/api/users", headers=auth_headers(alice_token)).json()["data"]["items"]
+    bob_users = client.get("/api/users", headers=auth_headers(bob_token)).json()["data"]["items"]
+    assert next(item for item in alice_users if item["id"] == bob_id)["relationship"] == "friend"
+    assert next(item for item in bob_users if item["id"] == alice_id)["relationship"] == "friend"
+
+
+def test_accept_incoming_friend_request_enables_direct_conversation(client: TestClient) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+    client.post(f"/api/friends/{alice_id}/accept", headers=auth_headers(bob_token))
+
+    response = client.post(
+        "/api/conversations/ensure",
+        headers=auth_headers(alice_token),
+        json={"target_type": "user", "target_id": str(bob_id)},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["conversation"]["target_id"] == str(bob_id)
+
+
+def test_employee_message_after_accept_persists_for_both_users_and_pushes_events(
+    client: TestClient, monkeypatch
+) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+    client.post(f"/api/friends/{alice_id}/accept", headers=auth_headers(bob_token))
+    alice_conversation = client.post(
+        "/api/conversations/ensure",
+        headers=auth_headers(alice_token),
+        json={"target_type": "user", "target_id": str(bob_id)},
+    ).json()["data"]["conversation"]
+    pushed: list[tuple[int, dict[str, object]]] = []
+
+    async def fake_send_to_user(user_id: int, payload: dict[str, object]) -> None:
+        pushed.append((user_id, payload))
+
+    monkeypatch.setattr("app.api.conversations.employee_ws_sessions.send_to_user", fake_send_to_user)
+
+    response = client.post(
+        f"/api/conversations/{alice_conversation['id']}/messages",
+        headers=auth_headers(alice_token),
+        json={"content": "hello bob", "content_type": "text"},
+    )
+
+    assert response.status_code == 200
+    sent = response.json()["data"]["messages"][0]
+    assert sent["content"] == "hello bob"
+
+    alice_history = client.get(
+        f"/api/conversations/{alice_conversation['id']}/messages",
+        headers=auth_headers(alice_token),
+    ).json()["data"]["items"]
+    assert alice_history[-1]["content"] == "hello bob"
+    assert alice_history[-1]["client_message_id"] == sent["client_message_id"]
+
+    bob_conversations = client.get(
+        "/api/conversations", headers=auth_headers(bob_token)
+    ).json()["data"]["items"]
+    bob_conversation = next(item for item in bob_conversations if item["target_id"] == str(alice_id))
+    bob_history = client.get(
+        f"/api/conversations/{bob_conversation['id']}/messages",
+        headers=auth_headers(bob_token),
+    ).json()["data"]["items"]
+    assert bob_history[-1]["content"] == "hello bob"
+    assert bob_history[-1]["client_message_id"] == sent["client_message_id"]
+    assert [item[0] for item in pushed] == [bob_id, bob_id]
+    assert [item[1]["type"] for item in pushed] == ["message.new", "conversation.updated"]
+
+
+def test_accept_friend_request_requires_incoming_request(client: TestClient) -> None:
+    _, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, _ = register_user(client, "bob", "E102", "Bob")
+    client.post(f"/api/friends/{bob_id}", headers=auth_headers(alice_token))
+
+    response = client.post(f"/api/friends/{bob_id}/accept", headers=auth_headers(alice_token))
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "NOT_FOUND"
+
+
 def test_bot_message_roundtrip_waits_for_connected_bot_reply(client: TestClient, monkeypatch) -> None:
     user_id, token = register_user(client, "zhangsan", "E001", "张三")
     bot_id = re.search(r"BOT_ID: (bot_[A-Z0-9]+)", command(client, token, "/new-bot")["content"]).group(1)

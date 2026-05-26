@@ -119,6 +119,14 @@ export function addFriend(token: string, userId: number) {
   );
 }
 
+export function acceptFriend(token: string, userId: number) {
+  return api<{ relationship: User["relationship"] }>(
+    `/friends/${userId}/accept`,
+    { method: "POST" },
+    token
+  );
+}
+
 export function bots(token: string) {
   return api<{ items: BotItem[] }>("/bots", {}, token);
 }

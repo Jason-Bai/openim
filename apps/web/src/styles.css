@@ -279,13 +279,13 @@ body {
 }
 
 .bubble {
-  max-width: min(720px, 80%);
+  max-width: min(980px, 92%);
   white-space: pre-wrap;
   background: #fff;
   border: 1px solid #e5e9f2;
   border-radius: 8px;
-  padding: 12px 14px;
-  line-height: 1.55;
+  padding: 10px 12px;
+  line-height: 1.5;
 }
 
 .message.user .bubble {
@@ -304,8 +304,8 @@ body {
 
 .messageContent {
   overflow-wrap: anywhere;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .messageContent > :first-child {
@@ -331,6 +331,15 @@ body {
   margin: 0 0 10px;
 }
 
+.messageContent p,
+.messageContent ul,
+.messageContent ol,
+.messageContent blockquote,
+.messageContent table,
+.messageContent pre {
+  margin-bottom: 8px;
+}
+
 .messageContent h1,
 .messageContent h2,
 .messageContent h3,
@@ -343,18 +352,18 @@ body {
 }
 
 .messageContent h1 {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .messageContent h2 {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .messageContent h3,
 .messageContent h4,
 .messageContent h5,
 .messageContent h6 {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .messageContent ul,
@@ -368,7 +377,7 @@ body {
   background: #101827;
   color: #e6edf7;
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   white-space: pre;
 }
 

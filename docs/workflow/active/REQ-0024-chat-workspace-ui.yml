@@ -1,0 +1,74 @@
+id: REQ-0024-chat-workspace-ui
+title: Chat workspace information architecture and responsive UI optimization
+type: feature
+status: active
+phase: code_review
+
+github:
+  issue: https://github.com/Jason-Bai/openim/issues/24
+  issues:
+    - https://github.com/Jason-Bai/openim/issues/24
+  pr: https://github.com/Jason-Bai/openim/pull/25
+  prs:
+    - https://github.com/Jason-Bai/openim/pull/25
+  develop_pr: https://github.com/Jason-Bai/openim/pull/25
+  test_pr: null
+  main_pr: null
+
+branch:
+  name: feature/24-chat-workspace-ui
+  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-24-chat-workspace-ui
+
+execution_items:
+  - issue: https://github.com/Jason-Bai/openim/issues/24
+    title: Chat workspace information architecture and responsive UI optimization
+    branch: feature/24-chat-workspace-ui
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-24-chat-workspace-ui
+    develop_pr: https://github.com/Jason-Bai/openim/pull/25
+    test_pr: null
+    main_pr: null
+    tag: null
+    phase: code_review
+    status: active
+
+docs:
+  prd: docs/product/requirements/REQ-0024-chat-workspace-ui.md
+  ux: docs/product/designs/REQ-0024-chat-workspace-ui.md
+  technical_design: docs/engineering/designs/REQ-0024-chat-workspace-ui.md
+  implementation_plan: docs/engineering/plans/REQ-0024-chat-workspace-ui-implementation-plan.md
+  test_report: docs/tests/REQ-0024-chat-workspace-ui-test-report.md
+  release_note: null
+
+reviews:
+  product_review: approved
+  ux_review: approved
+  technical_review: approved
+  code_review: pending
+  develop_review: pending
+  product_test: pending
+  release_review: pending
+  qa_review: pending
+
+deployment:
+  environment: null
+  deployed_at: null
+  smoke_test: null
+  tag: null
+  hotfix_backmerge:
+    develop: null
+    test: null
+
+timestamps:
+  created_at: "2026-05-27"
+  updated_at: "2026-05-27"
+
+blockers: []
+dependencies: []
+notes:
+  - Created after UI/UX analysis of the released chat experience on origin/main.
+  - PRD and UX drafts confirmed by user on 2026-05-27.
+  - Technical design confirmed by user on 2026-05-27.
+  - Implementation plan confirmed by user on 2026-05-27.
+  - Dedicated implementation branch and worktree created from origin/main.
+  - Implementation completed with command verification and browser QA on 2026-05-27.
+  - Draft develop PR opened on 2026-05-27.

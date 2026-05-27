@@ -1,8 +1,8 @@
 id: REQ-0024-chat-workspace-ui
 title: Chat workspace information architecture and responsive UI optimization
 type: feature
-status: active
-phase: code_review
+status: done
+phase: accepted
 
 github:
   issue: https://github.com/Jason-Bai/openim/issues/24
@@ -11,9 +11,11 @@ github:
   pr: https://github.com/Jason-Bai/openim/pull/25
   prs:
     - https://github.com/Jason-Bai/openim/pull/25
+    - https://github.com/Jason-Bai/openim/pull/27
+    - https://github.com/Jason-Bai/openim/pull/29
   develop_pr: https://github.com/Jason-Bai/openim/pull/25
-  test_pr: null
-  main_pr: null
+  test_pr: https://github.com/Jason-Bai/openim/pull/27
+  main_pr: https://github.com/Jason-Bai/openim/pull/29
 
 branch:
   name: feature/24-chat-workspace-ui
@@ -25,11 +27,11 @@ execution_items:
     branch: feature/24-chat-workspace-ui
     worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-24-chat-workspace-ui
     develop_pr: https://github.com/Jason-Bai/openim/pull/25
-    test_pr: null
-    main_pr: null
-    tag: null
-    phase: code_review
-    status: active
+    test_pr: https://github.com/Jason-Bai/openim/pull/27
+    main_pr: https://github.com/Jason-Bai/openim/pull/29
+    tag: release/chat-workspace-ui-20260527
+    phase: accepted
+    status: done
 
 docs:
   prd: docs/product/requirements/REQ-0024-chat-workspace-ui.md
@@ -43,17 +45,17 @@ reviews:
   product_review: approved
   ux_review: approved
   technical_review: approved
-  code_review: pending
-  develop_review: pending
-  product_test: pending
-  release_review: pending
-  qa_review: pending
+  code_review: approved
+  develop_review: approved
+  product_test: approved
+  release_review: approved
+  qa_review: approved
 
 deployment:
-  environment: null
-  deployed_at: null
-  smoke_test: null
-  tag: null
+  environment: main
+  deployed_at: "2026-05-27"
+  smoke_test: "npm run test -w apps/web; npm run build -w apps/web"
+  tag: release/chat-workspace-ui-20260527
   hotfix_backmerge:
     develop: null
     test: null
@@ -72,3 +74,7 @@ notes:
   - Dedicated implementation branch and worktree created from origin/main.
   - Implementation completed with command verification and browser QA on 2026-05-27.
   - Draft develop PR opened on 2026-05-27.
+  - Develop PR #25 merged on 2026-05-27.
+  - Direct develop-to-test PR #26 was closed because historical squash promotion caused conflicts; clean promotion PR #27 merged on 2026-05-27.
+  - Direct test-to-main PR #28 was closed for the same historical squash promotion conflict; clean release PR #29 merged on 2026-05-27.
+  - Release tag release/chat-workspace-ui-20260527 pushed on 2026-05-27.

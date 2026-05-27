@@ -42,7 +42,7 @@ export function AppSidebar({
         <div className="sidebarAccountName" title={username}>
           {username}
         </div>
-        <Button size="small" icon={<LogOut size={14} />} onClick={onLogout}>
+        <Button aria-label="退出登录" size="small" icon={<LogOut size={14} />} onClick={onLogout}>
           退出
         </Button>
       </div>

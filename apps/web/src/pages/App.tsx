@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, List, Segmented, Typography, message } from "antd";
-import { Bot, LogOut, Send, UserRound, UsersRound } from "lucide-react";
+import { Bot, Send, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
@@ -22,6 +22,7 @@ import {
   rejectFriend,
   sendConversationMessage,
 } from "../api/openim";
+import { AppSidebar } from "../components/AppSidebar";
 import { CopyableCodeBlock } from "../components/CopyableCodeBlock";
 import { useAuthStore } from "../state/authStore";
 
@@ -289,36 +290,17 @@ function ChatPage({
 
   return (
     <main className="shell">
-      <aside className="mainMenu">
-        <div className="brand">OpenIM</div>
-        <Button
-          type={menu === "sessions" ? "primary" : "text"}
-          icon={<UsersRound size={16} />}
-          onClick={() => {
-            setMenu("sessions");
-            setSelected((current) => (current.type === "conversation" ? current : { type: "guide" }));
-          }}
-        >
-          会话
-        </Button>
-        <Button
-          type={menu === "contacts" ? "primary" : "text"}
-          icon={<UsersRound size={16} />}
-          onClick={() => {
-            setMenu("contacts");
-            setSelected({ type: "guide" });
-          }}
-        >
-          通讯录
-        </Button>
-        <div className="menuSpacer" />
-        <div className="accountFooter">
-          <div className="accountName">{username}</div>
-          <Button size="small" icon={<LogOut size={14} />} onClick={onLogout}>
-            退出
-          </Button>
-        </div>
-      </aside>
+      <AppSidebar
+        menu={menu}
+        username={username}
+        onLogout={onLogout}
+        onMenuChange={(nextMenu) => {
+          setMenu(nextMenu);
+          setSelected((current) =>
+            nextMenu === "sessions" && current.type === "conversation" ? current : { type: "guide" }
+          );
+        }}
+      />
 
       <aside className="contacts">
         {menu === "sessions" ? (

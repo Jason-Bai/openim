@@ -279,19 +279,156 @@ body {
 }
 
 .bubble {
-  max-width: min(720px, 80%);
+  max-width: min(980px, 92%);
   white-space: pre-wrap;
   background: #fff;
   border: 1px solid #e5e9f2;
   border-radius: 8px;
-  padding: 12px 14px;
-  line-height: 1.55;
+  padding: 10px 12px;
+  line-height: 1.5;
 }
 
 .message.user .bubble {
   background: #1668dc;
   color: #fff;
   border-color: #1668dc;
+}
+
+.plainBubble {
+  white-space: pre-wrap;
+}
+
+.richBubble {
+  white-space: normal;
+}
+
+.messageContent {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.messageContent > :first-child {
+  margin-top: 0;
+}
+
+.messageContent > :last-child {
+  margin-bottom: 0;
+}
+
+.messageContent p,
+.messageContent ul,
+.messageContent ol,
+.messageContent h1,
+.messageContent h2,
+.messageContent h3,
+.messageContent h4,
+.messageContent h5,
+.messageContent h6,
+.messageContent blockquote,
+.messageContent table,
+.messageContent pre {
+  margin: 0 0 10px;
+}
+
+.messageContent p,
+.messageContent ul,
+.messageContent ol,
+.messageContent blockquote,
+.messageContent table,
+.messageContent pre {
+  margin-bottom: 8px;
+}
+
+.messageContent h1,
+.messageContent h2,
+.messageContent h3,
+.messageContent h4,
+.messageContent h5,
+.messageContent h6 {
+  color: #111827;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.messageContent h1 {
+  font-size: 16px;
+}
+
+.messageContent h2 {
+  font-size: 15px;
+}
+
+.messageContent h3,
+.messageContent h4,
+.messageContent h5,
+.messageContent h6 {
+  font-size: 14px;
+}
+
+.messageContent ul,
+.messageContent ol {
+  padding-left: 20px;
+}
+
+.messageContent pre {
+  max-width: 100%;
+  overflow: auto;
+  background: #101827;
+  color: #e6edf7;
+  border-radius: 8px;
+  padding: 10px;
+  white-space: pre;
+}
+
+.messageContent code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.messageContent :not(pre) > code {
+  background: #eef2f7;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.messageContent table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.messageContent th,
+.messageContent td {
+  border: 1px solid #d8e0ea;
+  padding: 6px 8px;
+}
+
+.messageContent blockquote {
+  border-left: 3px solid #b7c4d6;
+  color: #526173;
+  padding-left: 10px;
+}
+
+.collapsibleMessage {
+  display: grid;
+  gap: 8px;
+}
+
+.messageExpandButton {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: #1668dc;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.messageFoldBody.collapsed {
+  overflow: hidden;
 }
 
 .codeBlock {

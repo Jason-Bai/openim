@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, List, Segmented, Typography, message } from "antd";
-import { Bot, LogOut, Send, UserRound, UsersRound } from "lucide-react";
+import { ArrowDownToLine, Bot, Send, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   BotItem,
@@ -22,7 +22,8 @@ import {
   rejectFriend,
   sendConversationMessage,
 } from "../api/openim";
-import { CopyableCodeBlock } from "../components/CopyableCodeBlock";
+import { AppSidebar } from "../components/AppSidebar";
+import { MessageRenderer } from "../components/MessageRenderer";
 import { useAuthStore } from "../state/authStore";
 
 type MenuKey = "sessions" | "contacts";
@@ -289,36 +290,17 @@ function ChatPage({
 
   return (
     <main className="shell">
-      <aside className="mainMenu">
-        <div className="brand">OpenIM</div>
-        <Button
-          type={menu === "sessions" ? "primary" : "text"}
-          icon={<UsersRound size={16} />}
-          onClick={() => {
-            setMenu("sessions");
-            setSelected((current) => (current.type === "conversation" ? current : { type: "guide" }));
-          }}
-        >
-          会话
-        </Button>
-        <Button
-          type={menu === "contacts" ? "primary" : "text"}
-          icon={<UsersRound size={16} />}
-          onClick={() => {
-            setMenu("contacts");
-            setSelected({ type: "guide" });
-          }}
-        >
-          通讯录
-        </Button>
-        <div className="menuSpacer" />
-        <div className="accountFooter">
-          <div className="accountName">{username}</div>
-          <Button size="small" icon={<LogOut size={14} />} onClick={onLogout}>
-            退出
-          </Button>
-        </div>
-      </aside>
+      <AppSidebar
+        menu={menu}
+        username={username}
+        onLogout={onLogout}
+        onMenuChange={(nextMenu) => {
+          setMenu(nextMenu);
+          setSelected((current) =>
+            nextMenu === "sessions" && current.type === "conversation" ? current : { type: "guide" }
+          );
+        }}
+      />
 
       <aside className="contacts">
         {menu === "sessions" ? (
@@ -595,11 +577,44 @@ function ConversationChat({
     conversation.target_type === "system_default_bot" ? ["/help", "/new-bot", "/my-bots"] : [];
   const lastMessage = messages[messages.length - 1];
   const lastUserMessage = findPreviousUserMessage(messages);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const [nearBottom, setNearBottom] = useState(true);
   const canRetryLastOpenClawMessage =
     conversation.target_type === "openclaw_bot" &&
     lastMessage?.sender_type === "system" &&
     lastMessage.content.includes("暂时没有返回") &&
     lastUserMessage;
+  const updateScrollState = useCallback(function updateScrollState() {
+    const element = messageListRef.current;
+    if (!element) return;
+    const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+    setNearBottom(distanceToBottom < 96);
+  }, []);
+  const scrollToBottom = useCallback(function scrollToBottom(behavior: ScrollBehavior = "smooth") {
+    const element = messageListRef.current;
+    if (!element) return;
+    element.scrollTo({ top: element.scrollHeight, behavior });
+    setNearBottom(true);
+  }, []);
+
+  useEffect(
+    function resetScrollForConversation() {
+      scrollToBottom("auto");
+    },
+    [conversation.id, scrollToBottom]
+  );
+
+  useEffect(
+    function keepBottomPinnedForNewMessages() {
+      if (nearBottom) {
+        scrollToBottom("auto");
+      } else {
+        updateScrollState();
+      }
+    },
+    [lastMessage?.id, nearBottom, scrollToBottom, updateScrollState]
+  );
+
   return (
     <>
       <header className="chatHeader">
@@ -608,16 +623,27 @@ function ConversationChat({
           <Typography.Text type="secondary">{conversation.target_id}</Typography.Text>
         </div>
       </header>
-      <div className="messageList">
-        {messages.map((item) => (
-          <div className={`message ${item.sender_type === "user" ? "user" : "bot"}`} key={item.id}>
-            {item.content_type === "code" ? (
-              <CopyableCodeBlock content={item.content} />
-            ) : (
-              <div className="bubble">{item.content}</div>
-            )}
-          </div>
-        ))}
+      <div className="messageListShell">
+        <div className="messageList" ref={messageListRef} onScroll={updateScrollState}>
+          {messages.map((item) => (
+            <div
+              className={`message ${item.sender_type === "user" ? "user" : "bot"}`}
+              key={item.id}
+            >
+              <MessageRenderer message={item} />
+            </div>
+          ))}
+        </div>
+        {!nearBottom && (
+          <Button
+            aria-label="滚动到底部"
+            className="scrollToBottomButton"
+            icon={<ArrowDownToLine size={18} />}
+            shape="circle"
+            type="primary"
+            onClick={() => scrollToBottom()}
+          />
+        )}
       </div>
       {canRetryLastOpenClawMessage && (
         <div className="chatNotice">

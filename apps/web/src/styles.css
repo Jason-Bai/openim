@@ -103,6 +103,7 @@ body {
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .sidebarAccount .ant-btn {
@@ -234,6 +235,17 @@ body {
   margin: 0 0 4px;
 }
 
+.profileHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.profileHeaderMain {
+  min-width: 0;
+}
+
 .profileDetails {
   margin-top: 28px;
   display: grid;
@@ -252,13 +264,41 @@ body {
   height: 76px;
   background: #fff;
   border-bottom: 1px solid #e5e9f2;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: 12px;
   padding: 0 24px;
 }
 
-.chatHeader h4 {
+.chatHeaderTitle {
   margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatHeaderMain {
+  min-width: 0;
+}
+
+.chatHeaderSubtitle {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chatMobileBackButton {
+  display: none;
 }
 
 .messageListShell {
@@ -292,7 +332,7 @@ body {
 }
 
 .bubble {
-  max-width: min(980px, 92%);
+  max-width: min(1180px, 96%);
   white-space: pre-wrap;
   background: #fff;
   border: 1px solid #e5e9f2;
@@ -446,7 +486,7 @@ body {
 
 .codeBlock {
   position: relative;
-  width: min(760px, 80vw);
+  width: min(1100px, 88vw);
   background: #101827;
   color: #e6edf7;
   border-radius: 8px;
@@ -494,8 +534,9 @@ body {
 
 @media (max-width: 860px) {
   .shell {
+    height: 100vh;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
   }
   .appSidebar {
     min-height: auto;
@@ -526,12 +567,67 @@ body {
     border-left: 1px solid #e1e7ef;
     padding-top: 0;
     padding-left: 10px;
-    max-width: 136px;
+    max-width: 112px;
+    gap: 4px;
+  }
+  .sidebarAccountName {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sidebarAccount .ant-btn {
+    min-width: 36px;
+    width: 36px;
+    padding: 0;
+  }
+  .sidebarAccount .ant-btn > span:not(.ant-btn-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
   .contacts {
-    max-height: 240px;
+    min-height: 0;
+    max-height: none;
     border-right: none;
-    border-bottom: 1px solid #e5e9f2;
+    border-bottom: none;
+  }
+  .mobileList .chat {
+    display: none;
+  }
+  .mobileDetail .contacts {
+    display: none;
+  }
+  .mobileDetail .chat {
+    display: grid;
+  }
+  .chatMobileBackButton {
+    display: inline-flex;
+  }
+  .chatHeader {
+    height: 64px;
+    padding: 0 12px;
+  }
+  .messageList {
+    padding: 12px;
+    gap: 10px;
+  }
+  .message.bot .bubble,
+  .richBubble {
+    max-width: 100%;
+    width: 100%;
+  }
+  .message.user .bubble {
+    max-width: 88%;
+  }
+  .commandBar {
+    padding: 10px 12px;
+  }
+  .scrollToBottomButton {
+    right: 14px;
+    bottom: 14px;
   }
   .guidePanel,
   .profilePanel {

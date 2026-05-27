@@ -23,7 +23,7 @@ import {
   sendConversationMessage,
 } from "../api/openim";
 import { AppSidebar } from "../components/AppSidebar";
-import { CopyableCodeBlock } from "../components/CopyableCodeBlock";
+import { MessageRenderer } from "../components/MessageRenderer";
 import { useAuthStore } from "../state/authStore";
 
 type MenuKey = "sessions" | "contacts";
@@ -593,11 +593,7 @@ function ConversationChat({
       <div className="messageList">
         {messages.map((item) => (
           <div className={`message ${item.sender_type === "user" ? "user" : "bot"}`} key={item.id}>
-            {item.content_type === "code" ? (
-              <CopyableCodeBlock content={item.content} />
-            ) : (
-              <div className="bubble">{item.content}</div>
-            )}
+            <MessageRenderer message={item} />
           </div>
         ))}
       </div>

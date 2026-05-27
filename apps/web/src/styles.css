@@ -252,13 +252,41 @@ body {
   height: 76px;
   background: #fff;
   border-bottom: 1px solid #e5e9f2;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: 12px;
   padding: 0 24px;
 }
 
-.chatHeader h4 {
+.chatHeaderTitle {
   margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatHeaderMain {
+  min-width: 0;
+}
+
+.chatHeaderSubtitle {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chatMobileBackButton {
+  display: none;
 }
 
 .messageListShell {

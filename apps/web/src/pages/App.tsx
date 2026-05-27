@@ -23,6 +23,7 @@ import {
   sendConversationMessage,
 } from "../api/openim";
 import { AppSidebar } from "../components/AppSidebar";
+import { ConversationHeader } from "../components/ConversationHeader";
 import { MessageRenderer } from "../components/MessageRenderer";
 import { useAuthStore } from "../state/authStore";
 import { formatConversationPreview } from "../utils/conversationDisplay";
@@ -563,7 +564,9 @@ function ConversationChat({
   disabled,
   disabledReason,
   onValueChange,
-  onSubmit
+  onSubmit,
+  showBack,
+  onBack
 }: {
   conversation: Conversation;
   messages: ConversationMessage[];
@@ -573,6 +576,8 @@ function ConversationChat({
   disabledReason?: string;
   onValueChange: (value: string) => void;
   onSubmit: (value: string) => void;
+  showBack?: boolean;
+  onBack?: () => void;
 }) {
   const quickCommands =
     conversation.target_type === "system_default_bot" ? ["/help", "/new-bot", "/my-bots"] : [];
@@ -618,12 +623,7 @@ function ConversationChat({
 
   return (
     <>
-      <header className="chatHeader">
-        <div>
-          <Typography.Title level={4}>{conversation.title}</Typography.Title>
-          <Typography.Text type="secondary">{conversation.target_id}</Typography.Text>
-        </div>
-      </header>
+      <ConversationHeader conversation={conversation} showBack={showBack} onBack={onBack} />
       <div className="messageListShell">
         <div className="messageList" ref={messageListRef} onScroll={updateScrollState}>
           {messages.map((item) => (

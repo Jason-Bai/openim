@@ -332,7 +332,7 @@ body {
 }
 
 .bubble {
-  max-width: min(980px, 92%);
+  max-width: min(1180px, 96%);
   white-space: pre-wrap;
   background: #fff;
   border: 1px solid #e5e9f2;
@@ -486,7 +486,7 @@ body {
 
 .codeBlock {
   position: relative;
-  width: min(760px, 80vw);
+  width: min(1100px, 88vw);
   background: #101827;
   color: #e6edf7;
   border-radius: 8px;

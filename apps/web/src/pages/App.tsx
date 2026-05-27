@@ -25,6 +25,7 @@ import {
 import { AppSidebar } from "../components/AppSidebar";
 import { MessageRenderer } from "../components/MessageRenderer";
 import { useAuthStore } from "../state/authStore";
+import { formatConversationPreview } from "../utils/conversationDisplay";
 
 type MenuKey = "sessions" | "contacts";
 type ProfileTarget =
@@ -383,7 +384,7 @@ function SessionsList({
             <ContactLine
               icon={item.target_type === "user" ? "user" : "bot"}
               title={item.title}
-              subtitle={item.last_message || item.target_id}
+              subtitle={formatConversationPreview(item.last_message)}
               online={item.online}
             />
           </List.Item>

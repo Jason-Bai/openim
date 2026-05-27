@@ -743,7 +743,7 @@ function ProfileShell({
       <div className="profileHeader">
         {showBack && (
           <Button
-            aria-label="返回列表"
+            aria-label="返回会话列表"
             className="chatMobileBackButton"
             icon={<ArrowLeft size={18} />}
             onClick={onBack}
@@ -785,7 +785,9 @@ function GuidePanel({
         {menu === "sessions" ? "开始接入 OpenClaw 员工助手" : "选择联系人或 AI"}
       </Typography.Title>
       <Typography.Text type="secondary">
-        {menu === "sessions" ? "通过默认 BOT 创建接入槽位并获取连接信息。" : "从左侧选择一个对象，查看资料并开始操作。"}
+        {menu === "sessions"
+          ? "选择一个会话继续，或通过默认 BOT 创建 OpenClaw 助手连接。"
+          : "选择联系人或 AI，查看资料并开始聊天。"}
       </Typography.Text>
       {menu === "sessions" && (
         <div className="guideActions">

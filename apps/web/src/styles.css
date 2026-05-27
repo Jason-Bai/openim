@@ -103,6 +103,7 @@ body {
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .sidebarAccount .ant-btn {
@@ -566,7 +567,26 @@ body {
     border-left: 1px solid #e1e7ef;
     padding-top: 0;
     padding-left: 10px;
-    max-width: 136px;
+    max-width: 112px;
+    gap: 4px;
+  }
+  .sidebarAccountName {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sidebarAccount .ant-btn {
+    min-width: 36px;
+    width: 36px;
+    padding: 0;
+  }
+  .sidebarAccount .ant-btn > span:not(.ant-btn-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
   .contacts {
     min-height: 0;
@@ -585,6 +605,29 @@ body {
   }
   .chatMobileBackButton {
     display: inline-flex;
+  }
+  .chatHeader {
+    height: 64px;
+    padding: 0 12px;
+  }
+  .messageList {
+    padding: 12px;
+    gap: 10px;
+  }
+  .message.bot .bubble,
+  .richBubble {
+    max-width: 100%;
+    width: 100%;
+  }
+  .message.user .bubble {
+    max-width: 88%;
+  }
+  .commandBar {
+    padding: 10px 12px;
+  }
+  .scrollToBottomButton {
+    right: 14px;
+    bottom: 14px;
   }
   .guidePanel,
   .profilePanel {

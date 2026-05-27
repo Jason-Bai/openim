@@ -33,6 +33,12 @@ const status = "ready";
     expect(formatConversationPreview(null)).toBe("暂无消息");
   });
 
+  it("preserves underscores in technical identifiers", () => {
+    expect(formatConversationPreview("BOT_ID: bot_01ABC 下一步输入：/connect bot_01ABC")).toBe(
+      "BOT_ID: bot_01ABC 下一步输入：/connect bot_01ABC"
+    );
+  });
+
   it("shows business-facing status before technical ids", () => {
     const conversation: Conversation = {
       id: "conversation_1",

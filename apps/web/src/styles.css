@@ -261,13 +261,26 @@ body {
   margin: 0;
 }
 
-.messageList {
+.messageListShell {
   min-height: 0;
+  position: relative;
+}
+
+.messageList {
+  height: 100%;
   padding: 24px;
   overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.scrollToBottomButton {
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  z-index: 2;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
 }
 
 .message {

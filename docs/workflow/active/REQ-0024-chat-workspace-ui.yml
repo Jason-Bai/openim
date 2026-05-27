@@ -2,7 +2,7 @@ id: REQ-0024-chat-workspace-ui
 title: Chat workspace information architecture and responsive UI optimization
 type: feature
 status: active
-phase: technical_review
+phase: planned
 
 github:
   issue: https://github.com/Jason-Bai/openim/issues/24
@@ -34,14 +34,14 @@ docs:
   prd: docs/product/requirements/REQ-0024-chat-workspace-ui.md
   ux: docs/product/designs/REQ-0024-chat-workspace-ui.md
   technical_design: docs/engineering/designs/REQ-0024-chat-workspace-ui.md
-  implementation_plan: null
+  implementation_plan: docs/engineering/plans/REQ-0024-chat-workspace-ui-implementation-plan.md
   test_report: null
   release_note: null
 
 reviews:
   product_review: approved
   ux_review: approved
-  technical_review: pending
+  technical_review: approved
   code_review: pending
   develop_review: pending
   product_test: pending
@@ -66,5 +66,6 @@ dependencies: []
 notes:
   - Created after UI/UX analysis of the released chat experience on origin/main.
   - PRD and UX drafts confirmed by user on 2026-05-27.
-  - Current phase is technical review; implementation is not approved yet.
+  - Technical design confirmed by user on 2026-05-27.
+  - Current phase is planned; implementation plan is ready for review before coding starts.
   - Dedicated implementation branch and worktree should be created only after PRD, UX, technical design, and implementation plan are approved.

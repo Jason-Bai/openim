@@ -1,6 +1,6 @@
 # REQ-0024 Technical Design: Chat Workspace UI Optimization
 
-Status: draft for technical review.
+Status: technical design approved on 2026-05-27.
 
 Issue: https://github.com/Jason-Bai/openim/issues/24
 

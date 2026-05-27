@@ -327,6 +327,10 @@ body {
   display: flex;
 }
 
+.message.bot {
+  width: 100%;
+}
+
 .message.user {
   justify-content: flex-end;
 }
@@ -352,7 +356,23 @@ body {
 }
 
 .richBubble {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  padding-right: 44px;
   white-space: normal;
+}
+
+.messageCopyButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #64748b;
+}
+
+.messageCopyButton:hover,
+.messageCopyButton:focus-visible {
+  color: #1668dc;
 }
 
 .messageContent {

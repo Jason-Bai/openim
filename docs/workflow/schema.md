@@ -16,6 +16,9 @@ github:
   issues: []
   pr: null
   prs: []
+  develop_pr: null
+  test_pr: null
+  main_pr: null
 
 branch:
   name: null
@@ -36,12 +39,19 @@ reviews:
   ux_review: not_required
   technical_review: pending
   code_review: pending
+  develop_review: pending
+  product_test: pending
+  release_review: pending
   qa_review: pending
 
 deployment:
   environment: null
   deployed_at: null
   smoke_test: null
+  tag: null
+  hotfix_backmerge:
+    develop: null
+    test: null
 
 timestamps:
   created_at: "YYYY-MM-DD"
@@ -59,10 +69,13 @@ When one approved requirement is split into multiple independently shippable exe
 ```yaml
 execution_items:
   - issue: https://github.com/OWNER/REPO/issues/1
-    pr: https://github.com/OWNER/REPO/pull/2
     branch: feature/1-short-name
     worktree: /absolute/path/to/worktree
-    phase: code_review
+    develop_pr: https://github.com/OWNER/REPO/pull/2
+    test_pr: https://github.com/OWNER/REPO/pull/3
+    main_pr: https://github.com/OWNER/REPO/pull/4
+    tag: v2026.05.26.1
+    phase: released
     status: active
 ```
 
@@ -96,10 +109,15 @@ execution_items:
 - `planned`
 - `development`
 - `code_review`
-- `testing`
+- `develop_review`
+- `develop_testing`
+- `test_review`
+- `product_testing`
 - `qa_review`
-- `ready_to_merge`
+- `release_review`
+- `ready_to_release`
 - `deployed`
+- `released`
 - `accepted`
 - `done`
 - `archived`
@@ -118,10 +136,14 @@ execution_items:
 - `technical_review` requires `docs.technical_design`.
 - `planned` requires `docs.implementation_plan`.
 - `development` requires `branch.name` and `branch.worktree`, or at least one `execution_items` entry with branch and worktree.
-- `code_review` requires `github.pr`, or at least one `execution_items` entry with `pr`.
-- `testing` requires at least one verification command in the PR.
+- `develop_review` requires `github.develop_pr` or at least one `execution_items` entry with `develop_pr`.
+- `develop_testing` requires merged develop PR and self-test evidence.
+- `test_review` requires `github.test_pr` or at least one `execution_items` entry with `test_pr`.
+- `product_testing` requires product test evidence.
 - `qa_review` requires `docs.test_report` unless explicitly waived in `notes`.
-- `deployed` requires `deployment.environment` and `deployment.smoke_test`.
+- `release_review` requires `github.main_pr` or at least one `execution_items` entry with `main_pr`.
+- `deployed` requires `deployment.environment`, `deployment.tag`, and `deployment.smoke_test`.
+- `released` requires the release tag to exist remotely.
 - `done` requires the file to move to `docs/workflow/done/`.
 
 ## Parallel Work Guidance

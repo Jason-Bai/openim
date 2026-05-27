@@ -171,7 +171,7 @@ The plan should break work into small verifiable tasks. Each task should name fi
 
 Do not develop directly on `main`.
 
-Before creating a branch or worktree, update the local `main` checkout to the latest remote stable baseline:
+Before creating a branch or worktree, update the local `main` checkout to the latest remote production baseline:
 
 ```bash
 git fetch origin --prune
@@ -190,7 +190,7 @@ docs/<issue-number>-short-name
 chore/<issue-number>-short-name
 ```
 
-Create the branch/worktree from the updated local `main`. Use one worktree per independent Issue. Parallel work should not share one checkout.
+Create the feature branch/worktree from the updated local `main`. Feature branches do not start from `develop` by default. If a feature depends on another unreleased feature, record that dependency in the PRD, technical design, and registry before development starts.
 
 Record `branch.name` and `branch.worktree` in the registry file before development starts.
 
@@ -227,9 +227,38 @@ docs/tests/REQ-0000-short-name-test-report.md
 
 when QA review or acceptance needs durable evidence.
 
-### 3.9 Pull Request
+### 3.9 Environment Branch Flow
 
-Open a PR from the feature branch to `main`.
+Open environment PRs in this order:
+
+```text
+feature/<issue>-short-name -> develop -> test -> main
+```
+
+Environment branches:
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production baseline. Only release PRs and hotfix PRs merge here. |
+| `develop` | Development integration and agent/self-test environment. |
+| `test` | Product testing and acceptance environment. |
+| `feature/*` | One approved Issue or execution slice. All fixes for that scope happen here. |
+| `hotfix/*` | Urgent production fix from `main`. |
+
+Feature flow:
+
+1. Open a PR from `feature/*` to `develop`.
+2. Run self-tests and integration checks on `develop`.
+3. If issues are found, fix them in `feature/*`, then merge the updated feature back to `develop`.
+4. After develop self-test passes, open a PR from the same `feature/*` to `test`.
+5. Product tests and accepts on `test`.
+6. If product testing finds issues, fix them in `feature/*`, then repeat `develop` self-test and `test` product test.
+7. After product acceptance, open the release PR from `feature/*` to `main`.
+8. After `main` merge, create a release tag and record it in the registry.
+
+Do not make feature or bugfix code changes directly on `develop`, `test`, or `main`. Those branches are gates, not working branches.
+
+### 3.10 Pull Request Content
 
 The PR must include:
 
@@ -242,9 +271,17 @@ The PR must include:
 
 Do not merge without review.
 
-### 3.10 Release
+### 3.11 Release
 
-After merge to `main`, tag stable versions when a meaningful product baseline is reached.
+After merge to `main`, tag the release.
+
+Tag naming:
+
+```text
+vYYYY.MM.DD.N
+```
+
+Use `N` when multiple releases happen on the same day, starting at `1`.
 
 Release notes should live under:
 
@@ -252,9 +289,27 @@ Release notes should live under:
 docs/releases/RELEASE-YYYY-MM-DD.md
 ```
 
-Record deployment environment and smoke-test evidence in the registry before moving to `deployed`.
+Record `main` PR, tag, deployment environment, and smoke-test evidence in the registry before moving to `deployed`.
 
-### 3.11 Acceptance And Closure
+### 3.12 Hotfix Flow
+
+Use hotfix flow only for production issues that cannot wait for the normal feature path.
+
+```text
+main -> hotfix/<issue>-short-name -> main -> tag
+                                  -> develop
+                                  -> test
+```
+
+Rules:
+
+- Create the hotfix branch from updated `main`.
+- Keep the fix minimal and covered by regression tests or explicit verification.
+- Merge the hotfix to `main` first, then tag the release.
+- Back-merge or cherry-pick the hotfix into `develop` and `test` immediately so later releases do not overwrite the production fix.
+- Record all PRs, tag, verification, and follow-up risk in the registry.
+
+### 3.13 Acceptance And Closure
 
 Before closing the Issue:
 
@@ -265,17 +320,26 @@ Before closing the Issue:
 
 ---
 
-## 4. Main Branch Policy
+## 4. Branch Policy
 
-`main` represents the latest stable baseline.
+`main` represents the production baseline.
+
+`develop` and `test` must exist before product development begins:
+
+- `develop` receives feature branches for integration and self-test.
+- `test` receives accepted feature candidates for product testing.
+- `main` receives only release PRs and hotfix PRs.
 
 Rules:
 
 - No direct feature development on `main`.
+- No direct feature development on `develop` or `test`.
 - No unrelated cleanup in feature branches.
 - No merge without review and verification evidence.
 - Keep feature branches short-lived.
-- Bug fixes should target `main` first, then be carried to release branches if such branches exist later.
+- Feature branches start from `main` unless the requirement explicitly depends on unreleased work.
+- Bugs found in `develop` or `test` return to the originating `feature/*` branch for fixes.
+- Production bugs use `hotfix/*` from `main`, then back-merge to `develop` and `test`.
 
 ---
 
@@ -293,6 +357,9 @@ Agents working in this repository must follow this sequence for non-trivial work
 8. Update the registry at each gate.
 9. Implement only the approved scope.
 10. Run verification.
-11. Prepare PR-ready summary.
+11. Open the feature PR to `develop`.
+12. After develop self-test passes, open the feature PR to `test`.
+13. After product acceptance passes, open the release PR to `main`.
+14. Tag the release and move the registry to `done`.
 
 Agents must not treat an informal chat request as approval to skip the Issue, registry, branch, design, review, testing, deployment, or verification gates when the work is product or engineering significant.

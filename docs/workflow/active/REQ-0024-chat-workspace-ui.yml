@@ -8,9 +8,10 @@ github:
   issue: https://github.com/Jason-Bai/openim/issues/24
   issues:
     - https://github.com/Jason-Bai/openim/issues/24
-  pr: null
-  prs: []
-  develop_pr: null
+  pr: https://github.com/Jason-Bai/openim/pull/25
+  prs:
+    - https://github.com/Jason-Bai/openim/pull/25
+  develop_pr: https://github.com/Jason-Bai/openim/pull/25
   test_pr: null
   main_pr: null
 
@@ -23,7 +24,7 @@ execution_items:
     title: Chat workspace information architecture and responsive UI optimization
     branch: feature/24-chat-workspace-ui
     worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-24-chat-workspace-ui
-    develop_pr: null
+    develop_pr: https://github.com/Jason-Bai/openim/pull/25
     test_pr: null
     main_pr: null
     tag: null
@@ -70,3 +71,4 @@ notes:
   - Implementation plan confirmed by user on 2026-05-27.
   - Dedicated implementation branch and worktree created from origin/main.
   - Implementation completed with command verification and browser QA on 2026-05-27.
+  - Draft develop PR opened on 2026-05-27.

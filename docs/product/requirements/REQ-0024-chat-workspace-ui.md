@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft for requirement review.
+Requirement approved on 2026-05-27. Technical design is in review.
 
 ## GitHub Issue
 
@@ -87,9 +87,9 @@ Navigation, list items, message controls, and scroll controls should have access
 - Cleaning message previews may introduce duplicated text-processing logic if not centralized.
 - Improving empty states could drift into admin-console scope if not constrained.
 
-## Open Questions
+## Product Decisions
 
-- Should mobile back behavior integrate with browser history, or only with in-app state?
-- Should the conversation list include timestamps in this requirement?
-- Should technical BOT IDs be copyable from the header detail, or only hidden visually?
-- Should unread counts be included now, or deferred until notification semantics are designed?
+- Mobile back behavior uses in-app state for this requirement. Browser history integration is deferred.
+- Conversation list should include a frontend timestamp when the existing conversation data provides enough information. No backend schema change is required for this requirement.
+- Technical BOT IDs should move out of the primary header subtitle and be available from a detail affordance with copy support when feasible.
+- Unread counts are deferred until notification and read-state semantics are designed.

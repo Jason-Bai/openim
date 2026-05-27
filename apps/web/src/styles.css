@@ -234,6 +234,17 @@ body {
   margin: 0 0 4px;
 }
 
+.profileHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.profileHeaderMain {
+  min-width: 0;
+}
+
 .profileDetails {
   margin-top: 28px;
   display: grid;
@@ -522,8 +533,9 @@ body {
 
 @media (max-width: 860px) {
   .shell {
+    height: 100vh;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
   }
   .appSidebar {
     min-height: auto;
@@ -557,9 +569,22 @@ body {
     max-width: 136px;
   }
   .contacts {
-    max-height: 240px;
+    min-height: 0;
+    max-height: none;
     border-right: none;
-    border-bottom: 1px solid #e5e9f2;
+    border-bottom: none;
+  }
+  .mobileList .chat {
+    display: none;
+  }
+  .mobileDetail .contacts {
+    display: none;
+  }
+  .mobileDetail .chat {
+    display: grid;
+  }
+  .chatMobileBackButton {
+    display: inline-flex;
   }
   .guidePanel,
   .profilePanel {

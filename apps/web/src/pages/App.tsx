@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, List, Segmented, Typography, message } from "antd";
-import { ArrowDownToLine, Bot, Send, UserRound } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, Bot, Send, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/client";
@@ -134,6 +134,7 @@ function ChatPage({
   const queryClient = useQueryClient();
   const [menu, setMenu] = useState<MenuKey>("sessions");
   const [selected, setSelected] = useState<SelectedView>({ type: "guide" });
+  const [mobileSurface, setMobileSurface] = useState<"list" | "detail">("list");
   const [inputValue, setInputValue] = useState("");
   const [optimistic, setOptimistic] = useState<Record<string, ConversationMessage[]>>({});
 
@@ -177,6 +178,7 @@ function ChatPage({
       }
       setMenu("sessions");
       setSelected({ type: "conversation", conversationId: data.conversation.id });
+      setMobileSurface("detail");
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (err) => {
@@ -291,13 +293,14 @@ function ChatPage({
   };
 
   return (
-    <main className="shell">
+    <main className={`shell ${mobileSurface === "detail" ? "mobileDetail" : "mobileList"}`}>
       <AppSidebar
         menu={menu}
         username={username}
         onLogout={onLogout}
         onMenuChange={(nextMenu) => {
           setMenu(nextMenu);
+          setMobileSurface("list");
           setSelected((current) =>
             nextMenu === "sessions" && current.type === "conversation" ? current : { type: "guide" }
           );
@@ -309,14 +312,20 @@ function ChatPage({
           <SessionsList
             items={conversationsQuery.data?.items ?? []}
             selected={selectedView}
-            onSelect={(conversationId) => setSelected({ type: "conversation", conversationId })}
+            onSelect={(conversationId) => {
+              setSelected({ type: "conversation", conversationId });
+              setMobileSurface("detail");
+            }}
           />
         ) : (
           <ContactsPanel
             ai={contactsQuery.data?.ai ?? []}
             all={contactsQuery.data?.all ?? []}
             selected={selectedView}
-            onSelect={(target) => setSelected({ type: "profile", target })}
+            onSelect={(target) => {
+              setSelected({ type: "profile", target });
+              setMobileSurface("detail");
+            }}
           />
         )}
       </aside>
@@ -332,6 +341,8 @@ function ChatPage({
             disabledReason="OpenClaw 员工助手未连接，请先完成接入"
             onValueChange={setInputValue}
             onSubmit={submitMessage}
+            showBack={mobileSurface === "detail"}
+            onBack={() => setMobileSurface("list")}
           />
         ) : selectedView.type === "profile" ? (
           <TargetProfile
@@ -344,6 +355,8 @@ function ChatPage({
             onAcceptFriend={(userId) => acceptFriendMutation.mutate(userId)}
             onRejectFriend={(userId) => rejectFriendMutation.mutate(userId)}
             onOpenSession={() => ensureMutation.mutate(selectedView.target)}
+            showBack={mobileSurface === "detail"}
+            onBack={() => setMobileSurface("list")}
           />
         ) : (
           <GuidePanel
@@ -486,7 +499,9 @@ function TargetProfile({
   onAddFriend,
   onAcceptFriend,
   onRejectFriend,
-  onOpenSession
+  onOpenSession,
+  showBack,
+  onBack
 }: {
   target: ProfileTarget;
   adding: boolean;
@@ -497,10 +512,12 @@ function TargetProfile({
   onAcceptFriend: (userId: number) => void;
   onRejectFriend: (userId: number) => void;
   onOpenSession: () => void;
+  showBack?: boolean;
+  onBack?: () => void;
 }) {
   if (target.type === "system_default_bot") {
     return (
-      <ProfileShell title="默认 BOT" subtitle="系统助手">
+      <ProfileShell title="默认 BOT" subtitle="系统助手" showBack={showBack} onBack={onBack}>
         <ProfileRow label="状态" value="在线" />
         <ProfileRow label="类型" value="系统默认助手" />
         <Button type="primary" loading={opening} onClick={onOpenSession}>
@@ -512,7 +529,7 @@ function TargetProfile({
   if (target.type === "openclaw_bot") {
     const canMessage = target.bot.connect_status === "connected" && target.bot.binding_status === "active";
     return (
-      <ProfileShell title={target.bot.name} subtitle={target.bot.bot_id}>
+      <ProfileShell title={target.bot.name} subtitle={target.bot.bot_id} showBack={showBack} onBack={onBack}>
         <ProfileRow label="类型" value="公司 OpenClaw 员工助手" />
         <ProfileRow label="状态" value={target.bot.connect_status === "connected" ? "在线" : "离线"} />
         <ProfileRow label="绑定" value={target.bot.binding_status === "active" ? "已绑定" : "未绑定"} />
@@ -526,7 +543,12 @@ function TargetProfile({
 
   const canMessage = target.user.relationship === "friend";
   return (
-    <ProfileShell title={target.user.real_name} subtitle={`${target.user.username} · ${target.user.employee_id}`}>
+    <ProfileShell
+      title={target.user.real_name}
+      subtitle={`${target.user.username} · ${target.user.employee_id}`}
+      showBack={showBack}
+      onBack={onBack}
+    >
       <ProfileRow label="状态" value={target.user.online ? "在线" : `离线，${leaveText(target.user.last_seen_at)}`} />
       <ProfileRow label="关系" value={relationshipText(target.user.relationship)} />
       {target.user.relationship === "none" && (
@@ -703,11 +725,37 @@ function findPreviousUserMessage(messages: ConversationMessage[]) {
   return null;
 }
 
-function ProfileShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+function ProfileShell({
+  title,
+  subtitle,
+  children,
+  showBack,
+  onBack
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+  showBack?: boolean;
+  onBack?: () => void;
+}) {
   return (
     <div className="profilePanel">
-      <Typography.Title level={3}>{title}</Typography.Title>
-      <Typography.Text type="secondary">{subtitle}</Typography.Text>
+      <div className="profileHeader">
+        {showBack && (
+          <Button
+            aria-label="返回列表"
+            className="chatMobileBackButton"
+            icon={<ArrowLeft size={18} />}
+            onClick={onBack}
+            shape="circle"
+            type="text"
+          />
+        )}
+        <div className="profileHeaderMain">
+          <Typography.Title level={3}>{title}</Typography.Title>
+          <Typography.Text type="secondary">{subtitle}</Typography.Text>
+        </div>
+      </div>
       <div className="profileDetails">{children}</div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, List, Segmented, Typography, message } from "antd";
-import { Bot, Send, UserRound } from "lucide-react";
+import { ArrowDownToLine, Bot, Send, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   BotItem,
@@ -577,11 +577,44 @@ function ConversationChat({
     conversation.target_type === "system_default_bot" ? ["/help", "/new-bot", "/my-bots"] : [];
   const lastMessage = messages[messages.length - 1];
   const lastUserMessage = findPreviousUserMessage(messages);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const [nearBottom, setNearBottom] = useState(true);
   const canRetryLastOpenClawMessage =
     conversation.target_type === "openclaw_bot" &&
     lastMessage?.sender_type === "system" &&
     lastMessage.content.includes("暂时没有返回") &&
     lastUserMessage;
+  const updateScrollState = useCallback(function updateScrollState() {
+    const element = messageListRef.current;
+    if (!element) return;
+    const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+    setNearBottom(distanceToBottom < 96);
+  }, []);
+  const scrollToBottom = useCallback(function scrollToBottom(behavior: ScrollBehavior = "smooth") {
+    const element = messageListRef.current;
+    if (!element) return;
+    element.scrollTo({ top: element.scrollHeight, behavior });
+    setNearBottom(true);
+  }, []);
+
+  useEffect(
+    function resetScrollForConversation() {
+      scrollToBottom("auto");
+    },
+    [conversation.id, scrollToBottom]
+  );
+
+  useEffect(
+    function keepBottomPinnedForNewMessages() {
+      if (nearBottom) {
+        scrollToBottom("auto");
+      } else {
+        updateScrollState();
+      }
+    },
+    [lastMessage?.id, nearBottom, scrollToBottom, updateScrollState]
+  );
+
   return (
     <>
       <header className="chatHeader">
@@ -590,12 +623,27 @@ function ConversationChat({
           <Typography.Text type="secondary">{conversation.target_id}</Typography.Text>
         </div>
       </header>
-      <div className="messageList">
-        {messages.map((item) => (
-          <div className={`message ${item.sender_type === "user" ? "user" : "bot"}`} key={item.id}>
-            <MessageRenderer message={item} />
-          </div>
-        ))}
+      <div className="messageListShell">
+        <div className="messageList" ref={messageListRef} onScroll={updateScrollState}>
+          {messages.map((item) => (
+            <div
+              className={`message ${item.sender_type === "user" ? "user" : "bot"}`}
+              key={item.id}
+            >
+              <MessageRenderer message={item} />
+            </div>
+          ))}
+        </div>
+        {!nearBottom && (
+          <Button
+            aria-label="滚动到底部"
+            className="scrollToBottomButton"
+            icon={<ArrowDownToLine size={18} />}
+            shape="circle"
+            type="primary"
+            onClick={() => scrollToBottom()}
+          />
+        )}
       </div>
       {canRetryLastOpenClawMessage && (
         <div className="chatNotice">

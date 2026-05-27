@@ -1,0 +1,69 @@
+id: REQ-0024-chat-workspace-ui
+title: Chat workspace information architecture and responsive UI optimization
+type: feature
+status: active
+phase: requirement_review
+
+github:
+  issue: https://github.com/Jason-Bai/openim/issues/24
+  issues:
+    - https://github.com/Jason-Bai/openim/issues/24
+  pr: null
+  prs: []
+  develop_pr: null
+  test_pr: null
+  main_pr: null
+
+branch:
+  name: docs/24-chat-workspace-ui
+  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/docs-24-chat-workspace-ui
+
+execution_items:
+  - issue: https://github.com/Jason-Bai/openim/issues/24
+    title: Chat workspace information architecture and responsive UI optimization
+    branch: null
+    worktree: null
+    develop_pr: null
+    test_pr: null
+    main_pr: null
+    tag: null
+    phase: requirement_review
+    status: active
+
+docs:
+  prd: docs/product/requirements/REQ-0024-chat-workspace-ui.md
+  ux: docs/product/designs/REQ-0024-chat-workspace-ui.md
+  technical_design: null
+  implementation_plan: null
+  test_report: null
+  release_note: null
+
+reviews:
+  product_review: pending
+  ux_review: pending
+  technical_review: pending
+  code_review: pending
+  develop_review: pending
+  product_test: pending
+  release_review: pending
+  qa_review: pending
+
+deployment:
+  environment: null
+  deployed_at: null
+  smoke_test: null
+  tag: null
+  hotfix_backmerge:
+    develop: null
+    test: null
+
+timestamps:
+  created_at: "2026-05-27"
+  updated_at: "2026-05-27"
+
+blockers: []
+dependencies: []
+notes:
+  - Created after UI/UX analysis of the released chat experience on origin/main.
+  - Current phase is requirement review; implementation is not approved yet.
+  - Dedicated implementation branch and worktree should be created only after PRD, UX, technical design, and implementation plan are approved.

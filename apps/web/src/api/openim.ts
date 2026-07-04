@@ -159,10 +159,15 @@ export function conversationMessages(token: string, conversationId: string) {
   );
 }
 
-export function sendConversationMessage(token: string, conversationId: string, content: string) {
+export function sendConversationMessage(
+  token: string,
+  conversationId: string,
+  content: string,
+  contentType: ConversationMessage["content_type"] = "text"
+) {
   return api<{ conversation: Conversation; messages: ConversationMessage[] }>(
     `/conversations/${conversationId}/messages`,
-    { method: "POST", body: JSON.stringify({ content, content_type: "text" }) },
+    { method: "POST", body: JSON.stringify({ content, content_type: contentType }) },
     token
   );
 }

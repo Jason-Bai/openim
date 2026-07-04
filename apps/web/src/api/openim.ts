@@ -86,6 +86,21 @@ export type BotReply = {
   content: string;
 };
 
+export type BotConnectInfo = {
+  bot_id: string;
+  token: string;
+  token_status: "revealed_once" | "masked";
+  gateway_url: string;
+  protocol_version: string;
+  plugin: {
+    type: string;
+    package: string;
+    version: string;
+    install: string;
+    docs: string;
+  };
+};
+
 export function register(input: {
   username: string;
   password: string;
@@ -137,6 +152,18 @@ export function rejectFriend(token: string, userId: number) {
 
 export function bots(token: string) {
   return api<{ items: BotItem[] }>("/bots", {}, token);
+}
+
+export function createBot(token: string) {
+  return api<{ bot: Pick<BotItem, "bot_id" | "name" | "bot_type" | "connect_status"> }>(
+    "/bots",
+    { method: "POST" },
+    token
+  );
+}
+
+export function botConnectInfo(token: string, botId: string) {
+  return api<BotConnectInfo>(`/bots/${botId}/connect-info`, {}, token);
 }
 
 export function conversations(token: string) {

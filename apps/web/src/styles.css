@@ -227,6 +227,92 @@ body {
   margin-top: 8px;
 }
 
+.onboardingPanel {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 20px;
+  text-align: left;
+}
+
+.onboardingHeader {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.onboardingHeader h3 {
+  margin: 0 0 4px;
+}
+
+.onboardingIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #e8f1ff;
+  color: #1668dc;
+  display: grid;
+  place-items: center;
+}
+
+.onboardingSteps {
+  display: grid;
+  gap: 10px;
+}
+
+.onboardingStep {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.onboardingStep > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.stepIndex {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #344154;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.connectInfoPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.connectInfoGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.pluginConfigPreview {
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #101827;
+  color: #e6edf7;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .profilePanel {
   background: #fff;
 }
@@ -632,5 +718,12 @@ body {
   .guidePanel,
   .profilePanel {
     padding: 24px;
+  }
+  .onboardingStep {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .onboardingStep .ant-btn {
+    grid-column: 2;
+    justify-self: start;
   }
 }

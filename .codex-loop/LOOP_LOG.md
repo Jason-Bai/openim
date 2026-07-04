@@ -16,6 +16,42 @@
 - Next: Wait for PR #49 review/merge, then create a clean issue worktree for
   #43 and run TDD Maker execution.
 
+## Round 5 - Beta-0 First-Time Onboarding Guide
+
+- Discover: Issue #43 requires a product-surface guided flow so employees can
+  create an OpenClaw assistant slot and retrieve plugin connection info without
+  reading the README or typing `/new-bot`.
+- Intake: Scope is limited to the web first-run guide and existing `/api/bots`
+  contracts. Backend protocol changes, token regeneration UX, and real plugin
+  startup automation stay out of scope.
+- Capability Fit:
+  - Discover used issue #43, `docs/beta-0-openclaw-onboarding.md`, existing
+    web UI code, and backend BOT API/default BOT services.
+  - Execute used TDD with a focused frontend regression script and React UI
+    guidance.
+  - Browser automation was considered; command verification and TypeScript
+    build covered this first slice, while full browser E2E remains owned by
+    #45.
+- Plan: Add a failing onboarding regression script, expose direct BOT create
+  and connect-info client APIs, add a first-time CTA and guided steps in
+  `GuidePanel`, show BOT_ID/Gateway/Token, and provide copyable plugin config.
+- Execute: Added `scripts/test-web-onboarding-guide.mjs`, confirmed RED, then
+  implemented the minimal UI/API changes.
+- Verify: Pass. `node scripts/test-web-onboarding-guide.mjs`, the three
+  existing web regression scripts, `npm run test -w apps/web`,
+  `npm run build -w apps/web`, and targeted backend
+  `test_default_bot_creates_connects_and_masks_token` all exited 0. Vite still
+  reports the existing chunk-size warning.
+- Checker: Pending PR review.
+- Self-Evolution Audit:
+  - Proactively Discovered: #43 can reuse existing `/api/bots` endpoints
+    directly; no backend protocol change is needed for the first onboarding
+    slice.
+  - User-Corrected: None in this loop.
+  - Evolution Candidates: None.
+- Result: Implementation ready for PR review.
+- Next: Open PR for #43 and update issue/release-gate evidence after review.
+
 ## Round 1 - Preserve Code Message Content Type
 
 - Discover: Static inspection found `content_type: "code"` is accepted but user

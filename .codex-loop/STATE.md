@@ -2,11 +2,11 @@
 
 ## Current Task
 
-None.
+#43 P0: Beta-0 first-time OpenClaw assistant onboarding guide.
 
 ## Current Phase
 
-idle
+intake
 
 ## Current Branch
 
@@ -22,7 +22,8 @@ main
 
 ## Last Action
 
-Completed the frontend default BOT command refresh loop.
+Loaded Beta-0 GitHub issues #42-#48 into the loop queue and selected #43 as the
+next P0 execution task.
 
 ## Last Verification
 
@@ -44,7 +45,58 @@ Expected RED before fix:
 
 ## Next Step
 
-Wait for the next loop-managed task.
+Prepare an implementation plan for #43 after the baseline PR is reviewed and
+merged. Do not start Maker execution from local `main` until the remote baseline
+is clean.
+
+## GitHub Intake
+
+- Release gate: https://github.com/Jason-Bai/openim/issues/42
+- Current task: https://github.com/Jason-Bai/openim/issues/43
+- Queue:
+  - https://github.com/Jason-Bai/openim/issues/44
+  - https://github.com/Jason-Bai/openim/issues/45
+  - https://github.com/Jason-Bai/openim/issues/46
+  - https://github.com/Jason-Bai/openim/issues/47
+  - https://github.com/Jason-Bai/openim/issues/48
+- Baseline PR: https://github.com/Jason-Bai/openim/pull/49
+
+## Current Task Intake
+
+- Problem: Employees still need to rely on BOT commands, copied
+  JSON/config, and developer docs to connect an OpenClaw assistant. Beta-0
+  requires a first-time guided flow that works without reading the README.
+- Evidence:
+  - GitHub issue #43 defines the onboarding guide acceptance criteria.
+  - `docs/beta-0-openclaw-onboarding.md` identifies first-time onboarding as
+    the top P0 gap.
+  - Current UI still routes users through default BOT commands such as
+    `/new-bot` and `/connect`.
+- In Scope:
+  - First-time “Connect OpenClaw Assistant” guided flow from the product surface.
+  - Create slot, show BOT_ID, get connection info, copy config, start plugin,
+    detect online state, and send test message.
+  - Keep `/new-bot` and `/connect` as advanced command paths.
+  - Tests for the changed state transition or UI behavior.
+- Out Of Scope:
+  - Full IM features.
+  - Public plugin distribution.
+  - Complex permission model.
+  - Token regeneration UX unless promoted from #47.
+- Success Criteria:
+  - New employee sees a clear CTA to connect an OpenClaw assistant.
+  - Employee can create a BOT slot without typing `/new-bot`.
+  - Successful creation shows BOT_ID, next step, copy action, and
+    connection-info entry.
+  - Guided and command paths remain consistent without duplicate/conflicting
+    BOT state.
+- Risks:
+  - Medium: onboarding spans UI state, default BOT command semantics, and
+    plugin connection assumptions.
+  - The work should be split if design discovery shows backend contract changes
+    are required.
+- Rollback Plan:
+  - Revert the onboarding UI and related tests; leave command paths unchanged.
 
 ## Problem Intake
 

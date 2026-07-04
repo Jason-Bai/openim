@@ -6,11 +6,11 @@
 
 ## Current Phase
 
-intake
+review
 
 ## Current Branch
 
-main
+feature/43-beta-0-onboarding
 
 ## Iteration Count
 
@@ -22,18 +22,20 @@ main
 
 ## Last Action
 
-Loaded Beta-0 GitHub issues #42-#48 into the loop queue and selected #43 as the
-next P0 execution task.
+Implemented #43 first-time OpenClaw assistant onboarding guide in an isolated
+worktree after merging baseline PR #49.
 
 ## Last Verification
 
 Pass:
 
+- `node scripts/test-web-onboarding-guide.mjs`: pass
 - `node scripts/test-web-default-bot-command-refresh.mjs`: pass
 - `node scripts/test-web-contact-panel-dedup.mjs`: pass
 - `node scripts/test-web-code-message-payload.mjs`: pass
 - `npm run test -w apps/web`: pass (`tsc -b --noEmit`)
 - `npm run build -w apps/web`: pass (`vite build`; existing chunk-size warning)
+- `cd apps/server && uv run pytest tests/test_p0_flow.py::test_default_bot_creates_connects_and_masks_token -q`: pass
 
 ## Last Failure
 
@@ -45,9 +47,8 @@ Expected RED before fix:
 
 ## Next Step
 
-Prepare an implementation plan for #43 after the baseline PR is reviewed and
-merged. Do not start Maker execution from local `main` until the remote baseline
-is clean.
+Open a PR for #43, run review gate, then update issue #43 and release gate #42
+with verification evidence.
 
 ## GitHub Intake
 

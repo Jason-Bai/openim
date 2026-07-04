@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, List, Segmented, Typography, message } from "antd";
-import { ArrowDownToLine, ArrowLeft, Bot, Send, UserRound } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, Bot, Copy, PlugZap, Send, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   BotItem,
+  BotConnectInfo,
   BotStatusChangedEvent,
   ContactItem,
   Conversation,
@@ -13,9 +14,11 @@ import {
   User,
   acceptFriend,
   addFriend,
+  botConnectInfo,
   contacts,
   conversationMessages,
   conversations,
+  createBot,
   ensureConversation,
   login,
   register,
@@ -137,6 +140,7 @@ function ChatPage({
   const [mobileSurface, setMobileSurface] = useState<"list" | "detail">("list");
   const [inputValue, setInputValue] = useState("");
   const [optimistic, setOptimistic] = useState<Record<string, ConversationMessage[]>>({});
+  const [onboardingInfo, setOnboardingInfo] = useState<BotConnectInfo | null>(null);
 
   const contactsQuery = useQuery({ queryKey: ["contacts"], queryFn: () => contacts(token) });
   const conversationsQuery = useQuery({
@@ -245,6 +249,30 @@ function ChatPage({
       message.error(err instanceof ApiError ? err.message : "拒绝好友申请失败");
     }
   });
+
+  const createBotMutation = useMutation({
+    mutationFn: async () => {
+      const created = await createBot(token);
+      return botConnectInfo(token, created.bot.bot_id);
+    },
+    onSuccess: (data) => {
+      setOnboardingInfo(data);
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      message.success("已创建 OpenClaw 助手槽位");
+    },
+    onError: (err) => {
+      message.error(err instanceof ApiError ? err.message : "创建 OpenClaw 助手槽位失败");
+    }
+  });
+
+  const copyPluginConfig = useCallback(async (info: BotConnectInfo) => {
+    try {
+      await navigator.clipboard.writeText(buildOpenClawPluginConfig(info));
+      message.success("插件配置已复制");
+    } catch {
+      message.error("复制失败，请手动复制配置");
+    }
+  }, []);
 
   const sendMutation = useMutation({
     mutationFn: (vars: {
@@ -368,6 +396,10 @@ function ChatPage({
         ) : (
           <GuidePanel
             menu={menu}
+            connectInfo={onboardingInfo}
+            creating={createBotMutation.isPending}
+            onCreateBot={() => createBotMutation.mutate()}
+            onCopyPluginConfig={copyPluginConfig}
             onOpenDefaultBot={() => ensureMutation.mutate({ type: "system_default_bot", id: "default_bot" })}
             opening={ensureMutation.isPending}
           />
@@ -780,31 +812,118 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
 
 function GuidePanel({
   menu,
+  connectInfo,
+  creating,
   opening,
+  onCreateBot,
+  onCopyPluginConfig,
   onOpenDefaultBot
 }: {
   menu: MenuKey;
+  connectInfo: BotConnectInfo | null;
+  creating: boolean;
   opening: boolean;
+  onCreateBot: () => void;
+  onCopyPluginConfig: (info: BotConnectInfo) => void;
   onOpenDefaultBot: () => void;
 }) {
   return (
     <div className="guidePanel">
-      <Typography.Title level={3}>
-        {menu === "sessions" ? "开始接入 OpenClaw 员工助手" : "选择联系人或 AI"}
-      </Typography.Title>
-      <Typography.Text type="secondary">
-        {menu === "sessions"
-          ? "选择一个会话继续，或通过默认 BOT 创建 OpenClaw 助手连接。"
-          : "选择联系人或 AI，查看资料并开始聊天。"}
-      </Typography.Text>
-      {menu === "sessions" && (
-        <div className="guideActions">
-          <Button type="primary" loading={opening} onClick={onOpenDefaultBot}>
-            打开默认 BOT
-          </Button>
+      {menu === "sessions" ? (
+        <div className="onboardingPanel">
+          <div className="onboardingHeader">
+            <div className="onboardingIcon">
+              <PlugZap size={20} />
+            </div>
+            <div>
+              <Typography.Title level={3}>连接 OpenClaw 助手</Typography.Title>
+              <Typography.Text type="secondary">
+                创建一个员工助手槽位，复制插件配置，在 OpenClaw 侧启动插件后即可开始对话。
+              </Typography.Text>
+            </div>
+          </div>
+
+          <div className="onboardingSteps">
+            <div className="onboardingStep">
+              <span className="stepIndex">1</span>
+              <div>
+                <Typography.Text strong>创建助手槽位</Typography.Text>
+                <Typography.Text type="secondary">无需输入 /new-bot，系统会直接生成 BOT_ID。</Typography.Text>
+              </div>
+              <Button type="primary" loading={creating} onClick={onCreateBot}>
+                创建槽位
+              </Button>
+            </div>
+
+            <div className="onboardingStep">
+              <span className="stepIndex">2</span>
+              <div>
+                <Typography.Text strong>复制插件配置</Typography.Text>
+                <Typography.Text type="secondary">把配置填入 OpenClaw 插件，Token 只在首次展示时可见。</Typography.Text>
+              </div>
+              <Button
+                icon={<Copy size={16} />}
+                disabled={!connectInfo}
+                onClick={() => connectInfo && onCopyPluginConfig(connectInfo)}
+              >
+                复制插件配置
+              </Button>
+            </div>
+
+            <div className="onboardingStep">
+              <span className="stepIndex">3</span>
+              <div>
+                <Typography.Text strong>启动 OpenClaw 插件</Typography.Text>
+                <Typography.Text type="secondary">插件连上 Gateway 后，联系人里的助手状态会变为在线。</Typography.Text>
+              </div>
+              <Button loading={opening} onClick={onOpenDefaultBot}>
+                打开默认 BOT
+              </Button>
+            </div>
+          </div>
+
+          {connectInfo ? (
+            <div className="connectInfoPanel">
+              <div className="connectInfoGrid">
+                <ProfileRow label="BOT_ID" value={connectInfo.bot_id} />
+                <ProfileRow label="Gateway" value={connectInfo.gateway_url} />
+                <ProfileRow label="Token" value={connectInfo.token} />
+              </div>
+              <pre className="pluginConfigPreview">{buildOpenClawPluginConfig(connectInfo)}</pre>
+            </div>
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="还没有助手槽位"
+              description="点击“创建槽位”后，这里会显示 BOT_ID、Gateway、Token 和可复制的插件配置。"
+            />
+          )}
         </div>
+      ) : (
+        <>
+          <Typography.Title level={3}>选择联系人或 AI</Typography.Title>
+          <Typography.Text type="secondary">选择联系人或 AI，查看资料并开始聊天。</Typography.Text>
+        </>
       )}
     </div>
+  );
+}
+
+function buildOpenClawPluginConfig(info: BotConnectInfo) {
+  return JSON.stringify(
+    {
+      botId: info.bot_id,
+      token: info.token,
+      gatewayUrl: info.gateway_url,
+      protocolVersion: info.protocol_version,
+      plugin: info.plugin.package,
+      pluginInstall: info.plugin.install,
+      pluginVersion: info.plugin.version,
+      pluginDocs: info.plugin.docs
+    },
+    null,
+    2
   );
 }
 

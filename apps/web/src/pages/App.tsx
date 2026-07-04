@@ -247,12 +247,19 @@ function ChatPage({
   });
 
   const sendMutation = useMutation({
-    mutationFn: (vars: { conversationId: string; content: string; tempId: string }) =>
-      sendConversationMessage(token, vars.conversationId, vars.content),
+    mutationFn: (vars: {
+      conversationId: string;
+      content: string;
+      contentType: ConversationMessage["content_type"];
+      tempId: string;
+    }) => sendConversationMessage(token, vars.conversationId, vars.content, vars.contentType),
     onSuccess: (data, vars) => {
       setOptimistic((current) => removeOptimistic(current, vars.conversationId, vars.tempId));
       mergeMessageCache(queryClient, vars.conversationId, data.messages);
       upsertConversationCache(queryClient, data.conversation);
+      if (shouldRefreshDefaultBotState(data.conversation, vars.content)) {
+        queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      }
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (err, vars) => {
@@ -266,7 +273,7 @@ function ChatPage({
     ...(activeConversation ? optimistic[activeConversation.id] ?? [] : [])
   ];
 
-  const submitMessage = (value: string) => {
+  const submitMessage = (value: string, contentType: ConversationMessage["content_type"] = "text") => {
     if (!activeConversation) return;
     const content = value.trim();
     if (!content) return;
@@ -281,7 +288,7 @@ function ChatPage({
           conversation_id: activeConversation.id,
           sender_type: "user",
           sender_id: "me",
-          content_type: "text",
+          content_type: contentType,
           content,
           status: "sending",
           created_at: new Date().toISOString(),
@@ -289,7 +296,7 @@ function ChatPage({
         }
       ]
     }));
-    sendMutation.mutate({ conversationId: activeConversation.id, content, tempId });
+    sendMutation.mutate({ conversationId: activeConversation.id, content, contentType, tempId });
   };
 
   return (
@@ -420,6 +427,7 @@ function ContactsPanel({
   onSelect: (target: ProfileTarget) => void;
 }) {
   const activeProfile = selected.type === "profile" ? selected.target : undefined;
+  const employeeContacts = all.filter((item) => item.contact_type === "user");
   return (
     <>
       <Typography.Text type="secondary">已添加的 AI</Typography.Text>
@@ -441,10 +449,10 @@ function ContactsPanel({
         )}
       />
 
-      <Typography.Text type="secondary">全部联系人</Typography.Text>
+      <Typography.Text type="secondary">员工联系人</Typography.Text>
       <List
         size="small"
-        dataSource={all}
+        dataSource={employeeContacts}
         renderItem={(item) => (
           <List.Item
             className={`contactItem ${isContactSelected(item, activeProfile) ? "selected" : ""}`}
@@ -597,7 +605,7 @@ function ConversationChat({
   disabled?: boolean;
   disabledReason?: string;
   onValueChange: (value: string) => void;
-  onSubmit: (value: string) => void;
+  onSubmit: (value: string, contentType?: ConversationMessage["content_type"]) => void;
   showBack?: boolean;
   onBack?: () => void;
 }) {
@@ -672,7 +680,7 @@ function ConversationChat({
         <div className="chatNotice">
           <Button
             size="small"
-            onClick={() => onSubmit(lastUserMessage.content)}
+            onClick={() => onSubmit(lastUserMessage.content, lastUserMessage.content_type)}
             disabled={loading || disabled}
           >
             重新发送上一条
@@ -902,6 +910,14 @@ function removeOptimistic(
     ...current,
     [conversationId]: (current[conversationId] ?? []).filter((item) => item.id !== tempId)
   };
+}
+
+function shouldRefreshDefaultBotState(conversation: Conversation, content: string) {
+  if (conversation.target_type !== "system_default_bot") return false;
+  const command = content.trim();
+  return ["/new-bot", "/delete-bot", "/connect", "/disconnect", "/diagnose"].some(
+    (prefix) => command === prefix || command.startsWith(`${prefix} `)
+  );
 }
 
 function profileTargetFromContact(item: ContactItem): ProfileTarget {

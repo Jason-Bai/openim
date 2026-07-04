@@ -971,6 +971,43 @@ def test_employee_message_creates_sender_and_receiver_copies(client: TestClient)
     assert bob_history[-1]["client_message_id"] == sent["client_message_id"]
 
 
+def test_employee_code_message_preserves_content_type_for_both_users(client: TestClient) -> None:
+    alice_id, alice_token = register_user(client, "alice", "E101", "Alice")
+    bob_id, bob_token = register_user(client, "bob", "E102", "Bob")
+    accept_friendship(alice_id, bob_id)
+    content = "print('hello')"
+
+    alice_conversation = client.post(
+        "/api/conversations/ensure",
+        headers=auth_headers(alice_token),
+        json={"target_type": "user", "target_id": str(bob_id)},
+    ).json()["data"]["conversation"]
+
+    response = client.post(
+        f"/api/conversations/{alice_conversation['id']}/messages",
+        headers=auth_headers(alice_token),
+        json={"content": content, "content_type": "code"},
+    )
+
+    assert response.status_code == 200
+    sent = response.json()["data"]["messages"][0]
+    assert sent["content"] == content
+    assert sent["content_type"] == "code"
+
+    bob_conversations = client.get(
+        "/api/conversations", headers=auth_headers(bob_token)
+    ).json()["data"]["items"]
+    bob_conversation = next(item for item in bob_conversations if item["target_id"] == str(alice_id))
+    bob_history = client.get(
+        f"/api/conversations/{bob_conversation['id']}/messages",
+        headers=auth_headers(bob_token),
+    ).json()["data"]["items"]
+
+    assert bob_history[-1]["content"] == content
+    assert bob_history[-1]["content_type"] == "code"
+    assert bob_history[-1]["client_message_id"] == sent["client_message_id"]
+
+
 def test_employee_message_requires_accepted_friendship(client: TestClient) -> None:
     _, alice_token = register_user(client, "alice", "E101", "Alice")
     bob_id, _ = register_user(client, "bob", "E102", "Bob")

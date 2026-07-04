@@ -92,11 +92,11 @@ async def send_message(
     normalized_content = _validate_content(content, content_type)
     delivery_events: list[dict[str, object]] = []
     if conversation.target_type == "system_default_bot":
-        messages = _send_default_bot(db, user, conversation, normalized_content)
+        messages = _send_default_bot(db, user, conversation, normalized_content, content_type)
     elif conversation.target_type == "openclaw_bot":
-        messages = await _send_openclaw_bot(db, user, conversation, normalized_content)
+        messages = await _send_openclaw_bot(db, user, conversation, normalized_content, content_type)
     elif conversation.target_type == "user":
-        messages, delivery_events = _send_user(db, user, conversation, normalized_content)
+        messages, delivery_events = _send_user(db, user, conversation, normalized_content, content_type)
     else:
         raise ApiError("MESSAGE_DELIVERY_FAILED", "该会话类型暂不支持发送")
 
@@ -148,14 +148,14 @@ def _persist_message(
 
 
 def _send_default_bot(
-    db: Session, user: User, conversation, content: str
+    db: Session, user: User, conversation, content: str, content_type: str
 ) -> list[Message]:
     user_message = _persist_message(
         db,
         conversation_id=conversation.id,
         sender_type="user",
         sender_id=str(user.id),
-        content_type="text",
+        content_type=content_type,
         content=content,
     )
     reply = handle_command(db, user, content)
@@ -172,7 +172,7 @@ def _send_default_bot(
 
 
 def _send_user(
-    db: Session, user: User, conversation, content: str
+    db: Session, user: User, conversation, content: str, content_type: str
 ) -> tuple[list[Message], list[dict[str, object]]]:
     target_user_id = int(conversation.target_id)
     target_user = db.get(User, target_user_id)
@@ -191,7 +191,7 @@ def _send_user(
         conversation_id=conversation.id,
         sender_type="user",
         sender_id=str(user.id),
-        content_type="text",
+        content_type=content_type,
         content=content,
         client_message_id=client_message_id,
         created_at=created_at,
@@ -201,7 +201,7 @@ def _send_user(
         conversation_id=receiver_conversation.id,
         sender_type="user",
         sender_id=str(user.id),
-        content_type="text",
+        content_type=content_type,
         content=content,
         client_message_id=client_message_id,
         created_at=created_at,
@@ -224,7 +224,7 @@ def _send_user(
 
 
 async def _send_openclaw_bot(
-    db: Session, user: User, conversation, content: str
+    db: Session, user: User, conversation, content: str, content_type: str
 ) -> list[Message]:
     bot = db.scalar(select(Bot).where(Bot.bot_id == conversation.target_id))
     binding = db.scalar(
@@ -242,7 +242,7 @@ async def _send_openclaw_bot(
         conversation_id=conversation.id,
         sender_type="user",
         sender_id=str(user.id),
-        content_type="text",
+        content_type=content_type,
         content=content,
     )
     db.commit()

@@ -12,3 +12,5 @@ dist/
 apps/server/openim.db
 apps/server/.coverage
 apps/web/.vite/
+.worktrees/
+.superpowers/

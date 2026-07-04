@@ -1,5 +1,21 @@
 # Loop Log
 
+## GitHub Intake - Beta-0 Issues
+
+- Discover: Product manager and reviewer defined the Beta-0 issue set for the
+  OpenClaw assistant onboarding loop.
+- External Source: Created GitHub issues #42-#48 in `Jason-Bai/openim`.
+- Queue:
+  - #42 is the release gate.
+  - #43-#46 are P0 execution/verification blockers.
+  - #47-#48 are P1 readiness tasks unless promoted by #42 findings.
+- Current Task: Selected #43, “Beta-0 first-time OpenClaw assistant onboarding
+  guide”, as the next P0 loop task.
+- Baseline: Created PR #49 to merge the current local baseline before starting
+  issue work, so future PRs do not include unrelated historical commits.
+- Next: Wait for PR #49 review/merge, then create a clean issue worktree for
+  #43 and run TDD Maker execution.
+
 ## Round 1 - Preserve Code Message Content Type
 
 - Discover: Static inspection found `content_type: "code"` is accepted but user

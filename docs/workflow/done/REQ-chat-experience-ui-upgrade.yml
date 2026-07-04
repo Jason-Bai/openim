@@ -1,0 +1,107 @@
+id: REQ-chat-experience-ui-upgrade
+title: Chat experience UI upgrade
+type: feature
+status: done
+phase: accepted
+
+github:
+  issue: https://github.com/Jason-Bai/openim/issues/16
+  issues:
+    - https://github.com/Jason-Bai/openim/issues/16
+    - https://github.com/Jason-Bai/openim/issues/17
+    - https://github.com/Jason-Bai/openim/issues/18
+  pr: https://github.com/Jason-Bai/openim/pull/23
+  prs:
+    - https://github.com/Jason-Bai/openim/pull/19
+    - https://github.com/Jason-Bai/openim/pull/20
+    - https://github.com/Jason-Bai/openim/pull/21
+    - https://github.com/Jason-Bai/openim/pull/22
+    - https://github.com/Jason-Bai/openim/pull/23
+  develop_pr: https://github.com/Jason-Bai/openim/pull/22
+  test_pr: https://github.com/Jason-Bai/openim/pull/22
+  main_pr: https://github.com/Jason-Bai/openim/pull/23
+
+branch:
+  name: feature/16-sidebar-redesign
+  worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-16-sidebar-redesign
+
+execution_items:
+  - issue: https://github.com/Jason-Bai/openim/issues/16
+    title: Sidebar redesign for enterprise IM workspace
+    branch: feature/16-sidebar-redesign
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-16-sidebar-redesign
+    develop_pr: https://github.com/Jason-Bai/openim/pull/19
+    test_pr: https://github.com/Jason-Bai/openim/pull/22
+    main_pr: https://github.com/Jason-Bai/openim/pull/23
+    tag: release/chat-ui-upgrade-20260527
+    phase: accepted
+    status: done
+  - issue: https://github.com/Jason-Bai/openim/issues/17
+    title: Safe rich message renderer with long-content folding
+    branch: feature/17-rich-message-renderer
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-17-rich-message-renderer
+    develop_pr: https://github.com/Jason-Bai/openim/pull/20
+    test_pr: https://github.com/Jason-Bai/openim/pull/22
+    main_pr: https://github.com/Jason-Bai/openim/pull/23
+    tag: release/chat-ui-upgrade-20260527
+    phase: accepted
+    status: done
+  - issue: https://github.com/Jason-Bai/openim/issues/18
+    title: Scroll-to-bottom control for long conversations
+    branch: feature/18-scroll-to-bottom
+    worktree: /Users/baiyu/.config/superpowers/worktrees/openim/feature-18-scroll-to-bottom
+    develop_pr: https://github.com/Jason-Bai/openim/pull/21
+    test_pr: https://github.com/Jason-Bai/openim/pull/22
+    main_pr: https://github.com/Jason-Bai/openim/pull/23
+    tag: release/chat-ui-upgrade-20260527
+    phase: accepted
+    status: done
+
+docs:
+  prd: docs/superpowers/specs/2026-05-27-chat-experience-ui-upgrade-design.md
+  ux: null
+  technical_design: docs/engineering/REQ-chat-experience-ui-upgrade-technical-design.md
+  implementation_plan: docs/superpowers/plans/2026-05-27-chat-experience-ui-upgrade.md
+  test_report: null
+  release_note: null
+
+reviews:
+  product_review: approved
+  ux_review: approved
+  technical_review: approved
+  code_review: approved
+  develop_review: approved
+  product_test: passed
+  release_review: approved
+  qa_review: passed
+
+deployment:
+  environment: main
+  deployed_at: "2026-05-27"
+  smoke_test: passed
+  tag: release/chat-ui-upgrade-20260527
+  hotfix_backmerge:
+    develop: null
+    test: null
+
+timestamps:
+  created_at: "2026-05-27"
+  updated_at: "2026-05-27"
+  accepted_at: "2026-05-27"
+
+blockers: []
+dependencies: []
+notes:
+  - Requirement draft created before GitHub Issues, branch, or worktree per the approved workflow.
+  - Confirmed product decisions: enterprise IM sidebar direction, Markdown plus safe HTML message rendering, top-positioned expand/collapse control, and non-interrupting scroll-to-bottom behavior.
+  - PRD confirmed by user on 2026-05-27; requirement is ready for technical design.
+  - Technical design draft created before GitHub Issues, branch, or worktree per the approved workflow.
+  - Technical design confirmed by user on 2026-05-27; requirement is ready for implementation planning.
+  - GitHub Issues #16, #17, and #18 created after PRD, technical design, and implementation plan confirmation.
+  - Dedicated branches and worktrees created for Issues #16, #17, and #18.
+  - Feature branches were merged to develop through PRs #19, #20, and #21.
+  - Develop was promoted to test through PR #22.
+  - Product QA passed on the test branch with sidebar, rich rendering, long-message folding, and scroll-to-bottom behavior verified.
+  - Test was promoted to main through PR #23.
+  - Release tagged as release/chat-ui-upgrade-20260527.
+  - GitHub Issues #16, #17, and #18 were closed after release and acceptance evidence was recorded.

@@ -115,3 +115,74 @@ Required gates for non-trivial work:
 9. Implement only the approved scope in the dedicated branch/worktree created from updated `main`.
 10. Run relevant verification commands and update test/deployment evidence.
 11. Open a PR with linked Issue, registry, docs, verification evidence, risks, and rollback notes.
+
+UI/UX analysis requests:
+
+- When asked to analyze current UI problems, use the UI/UX design workflow before implementation.
+- Output must include both critique and design direction: observed problem, user impact, priority, concrete UI change, affected surface, and verification method.
+- Do not stop at a problem list. Provide an executable UI方案 with layout, hierarchy, states, accessibility, and responsive implications.
+- If the user asks to implement the UI方案, then promote it into the normal Issue, registry, UX doc, technical design, implementation plan, branch/worktree, and verification flow above.
+
+
+<!-- BEGIN CODEX DELIVERY SYSTEM -->
+# AGENTS.md
+
+## Goal
+
+You are the coding agent for this project. Do not only write code. Complete the implementation, verification, repair, and summary loop.
+
+## Loop Rule
+
+For each task:
+
+1. Read the relevant project context and `.codex/delivery` files.
+2. Make a short plan.
+3. Modify code.
+4. Run the required validation commands.
+5. If validation fails, read the error, update the feedback queue when appropriate, and continue repairing.
+6. Repeat until validation passes or a stop condition is reached.
+7. Final output must include changed files, core changes, validation commands, validation results, and remaining risk.
+
+## Validation Commands
+
+Prefer commands recorded in `.codex/delivery/constraints.md` and the active work item verification plan.
+
+If no project-specific commands are recorded, inspect the project manifest first, then choose the closest equivalent of:
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+## Stop Condition
+
+Stop only when:
+
+- Required validation passes.
+- A product or technical decision needs human confirmation.
+- The same blocking problem has failed three consecutive repair attempts.
+
+## Delivery Context
+
+Project-level context lives in:
+
+```text
+.codex/delivery/project.md
+.codex/delivery/worktrees.md
+.codex/delivery/decisions.md
+.codex/delivery/constraints.md
+```
+
+Work-item context usually lives in the active Git worktree:
+
+```text
+.codex/delivery/work-item.md
+.codex/delivery/plan.md
+.codex/delivery/verification.md
+```
+
+Keep these files current when work spans turns or agents.
+
+
+<!-- END CODEX DELIVERY SYSTEM -->

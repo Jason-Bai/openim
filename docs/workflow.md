@@ -137,6 +137,30 @@ Backend-only, protocol-only, or documentation-only work may skip this step.
 
 Mark `reviews.ux_review` as `not_required` when this step is skipped.
 
+### 3.3.1 UI/UX Analysis Requests
+
+When the user asks to analyze current UI problems, the agent should treat the request as a design analysis task, not as implementation approval.
+
+Use the UI/UX design workflow for this analysis. The required output is:
+
+- Current UI problem: what is visibly wrong or unclear.
+- Evidence: where it appears, with screenshot notes or browser observations when available.
+- User impact: why the issue matters for real use.
+- Priority: P0, P1, P2, or P3.
+- Design principle: what hierarchy, density, state, or interaction rule should guide the fix.
+- Executable UI方案: concrete layout, component, copy, state, accessibility, and responsive changes.
+- Verification: how the change should be checked, including browser viewport or accessibility checks when relevant.
+
+Do not stop at a critique-only report. A UI/UX analysis must include a proposed design direction specific enough for product review and later implementation planning.
+
+If the user approves implementation, promote the analysis into the normal workflow:
+
+1. Create or update the GitHub Issue.
+2. Create or update the delivery registry.
+3. Write or update the PRD/UX design doc.
+4. Complete technical design and implementation planning.
+5. Implement in a dedicated branch/worktree.
+
 ### 3.4 Technical Design
 
 Create a technical design under:

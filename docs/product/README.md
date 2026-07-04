@@ -22,6 +22,8 @@ GitHub Issues should link to these docs. Issues track discussion and status; the
 
 ## UX/UI Minimum Contents
 
+- Current UI critique with observed problems and user impact.
+- Executable UI方案 with layout, hierarchy, component behavior, copy, states, accessibility, and responsive rules.
 - User flow.
 - Page or component states.
 - Empty, loading, error, and disabled states.
